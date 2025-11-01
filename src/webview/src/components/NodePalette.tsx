@@ -16,7 +16,7 @@ export const NodePalette: React.FC = () => {
 
   const handleAddSubAgent = () => {
     const newNode = {
-      id: `node-${Date.now()}`,
+      id: `agent-${Date.now()}`,
       type: 'subAgent' as const,
       position: { x: 250, y: 100 },
       data: {
@@ -31,7 +31,7 @@ export const NodePalette: React.FC = () => {
 
   const handleAddAskUserQuestion = () => {
     const newNode = {
-      id: `node-${Date.now()}`,
+      id: `question-${Date.now()}`,
       type: 'askUserQuestion' as const,
       position: { x: 250, y: 300 },
       data: {
@@ -48,7 +48,7 @@ export const NodePalette: React.FC = () => {
 
   const handleAddPromptNode = () => {
     const newNode = {
-      id: `node-${Date.now()}`,
+      id: `prompt-${Date.now()}`,
       type: 'prompt' as const,
       position: { x: 350, y: 200 },
       data: {

@@ -424,7 +424,9 @@ function generateWorkflowExecutionLogic(workflow: Workflow): string {
           sections.push('');
         }
       } else if (node.data.multiSelect) {
-        sections.push('**選択モード:** 複数選択可能（選択された選択肢のリストが次のノードに渡されます）');
+        sections.push(
+          '**選択モード:** 複数選択可能（選択された選択肢のリストが次のノードに渡されます）'
+        );
         sections.push('');
         sections.push('**選択肢:**');
         for (const option of node.data.options) {

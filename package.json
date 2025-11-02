@@ -2,12 +2,12 @@
   "name": "cc-wf-studio",
   "displayName": "Claude Code Workflow Studio",
   "description": "Visual workflow editor for Claude Code SlashCommands and Sub-Agents",
-  "version": "1.0.0",
-  "publisher": "anthropic",
+  "version": "0.0.1",
+  "publisher": "breaking-break",
   "icon": "resources/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthropics/cc-wf-studio"
+    "url": "https://github.com/breaking-brake/cc-wf-studio"
   },
   "keywords": [
     "claude",

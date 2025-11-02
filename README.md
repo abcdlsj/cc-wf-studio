@@ -1,270 +1,155 @@
 # Claude Code Workflow Studio
 
-Visual workflow editor for Claude Code - Create, edit, and export workflows using Sub-Agents and AskUserQuestion nodes.
+<p align="center">
+  <img src="./resources/hero.png" alt="Claude Code Workflow Studio" width="800">
+</p>
 
-## Overview
+<p align="center">
+  <strong>Accelerate Claude Code automation with a visual workflow editor</strong>
+</p>
 
-Claude Code Workflow Studio is a VSCode extension that provides a visual, drag-and-drop interface for creating Claude Code workflows. Design complex automation workflows by connecting Sub-Agent nodes and decision points (AskUserQuestion), then export them to `.claude` format for immediate use with Claude Code.
+<p align="center">
+  Design complex AI agent workflows intuitively with drag-and-drop. Build Sub-Agent orchestrations and conditional branching without writing code, then export directly to <code>.claude</code> format for immediate execution.
+</p>
 
-## Features
+<!-- Hero image placeholder - recommended size: 1600x900px or 16:9 aspect ratio -->
+<!-- Place image at: /resources/hero.png -->
 
-- **Visual Workflow Editor**: Drag-and-drop interface inspired by AWS Step Functions
-- **Sub-Agent Nodes**: Configure Claude Code Sub-Agents with custom prompts, tools, and model selection
-- **AskUserQuestion Nodes**: Create conditional branches with 2-4 user-selectable options
-- **Real-time Validation**: Instant feedback on workflow structure and node configuration
-- **Save & Load**: Persist workflows as JSON in `.vscode/workflows/`
-- **Export to .claude Format**: Generate `.claude/agents/*.md` and `.claude/commands/*.md` files ready for Claude Code
-- **File Conflict Handling**: Automatic detection and confirmation dialog for overwriting existing files
-- **Node Property Editing**: Intuitive right-panel editor for configuring node properties
+## Why Claude Code Workflow Studio?
 
-## Installation
+### 🎯 No-Code Workflow Design
+No programming required. Connect Sub-Agent and user decision nodes visually to build sophisticated automation flows.
 
-### From VSCode Marketplace (Coming Soon)
+### ⚡ Ready to Execute
+Designed workflows automatically export to `.claude/agents/` and `.claude/commands/`. Use them immediately with Claude Code.
 
-1. Open VSCode
-2. Go to Extensions (`Ctrl+Shift+X` / `Cmd+Shift+X`)
-3. Search for "Claude Code Workflow Studio"
-4. Click Install
+### 🔄 Easy Iteration
+Save and load workflows as JSON. Experiment and refine your flows through trial and error.
 
-### From Source
+## Key Features
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd cc-wf-studio
-   ```
+✨ **Visual Workflow Editor** - Intuitive drag-and-drop canvas inspired by Dify
 
-2. Install dependencies:
-   ```bash
-   npm install
-   cd src/webview && npm install && cd ../..
-   ```
+🤖 **Sub-Agent Nodes** - Configure Claude Code Sub-Agents with custom prompts, tool permissions, and model selection (Sonnet/Opus/Haiku)
 
-3. Build the extension:
-   ```bash
-   npm run build
-   ```
+❓ **AskUserQuestion Nodes** - Create dynamic conditional branches with 2-4 user-selectable options
 
-4. Press F5 in VSCode to launch the Extension Development Host
+💾 **Save & Load** - Persist workflows as JSON files in `.vscode/workflows/`
 
-## Usage
+📤 **One-Click Export** - Generate `.claude/agents/*.md` and `.claude/commands/*.md` files ready for immediate use
 
-### Opening the Editor
+🔒 **Safe File Handling** - Automatic conflict detection with confirmation dialogs before overwriting
 
-1. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
-2. Type "Claude Code Workflow Studio: Open Editor"
-3. Press Enter
+⚙️ **Intuitive Property Panel** - Configure all node settings in a dedicated right-side panel
 
-The visual workflow editor will open in a new panel.
+## Getting Started
 
-### Creating a Workflow
+### Installation
 
-#### Step 1: Add Nodes
+**From VSCode Marketplace** (Coming Soon)
 
-**Sub-Agent Node:**
-1. From the left panel (Node Palette), drag "Sub-Agent" onto the canvas
-2. Click the node to select it
-3. In the right panel (Property Panel), configure:
-   - **Node Name**: Unique identifier for the agent (e.g., "data-analysis")
-   - **Description**: Purpose of the Sub-Agent
-   - **Prompt**: System prompt for the Sub-Agent
-   - **Model**: Choose between Sonnet, Opus, or Haiku
-   - **Tools**: Comma-separated list of allowed tools (leave empty for all tools)
+1. Open VSCode Extensions (`Ctrl+Shift+X` / `Cmd+Shift+X`)
+2. Search for "Claude Code Workflow Studio"
+3. Click **Install**
 
-**AskUserQuestion Node:**
-1. Drag "AskUserQuestion" from the Node Palette
-2. Click to select
-3. Configure in Property Panel:
-   - **Node Name**: Identifier for this decision point
-   - **Question**: The question to ask the user
-   - **Options (2-4)**: Each option has:
-     - Label: Short option name
-     - Description: Detailed explanation
+**From Source**
 
-#### Step 2: Connect Nodes
+Currently not available (private repository).
 
-1. Click and drag from a node's output port (right side)
-2. Drop on another node's input port (left side)
-3. For AskUserQuestion nodes, each option has its own output port
+### Quick Start
 
-#### Step 3: Save Workflow
+**1. Open the Editor**
+   - Press `Ctrl+Shift+P` / `Cmd+Shift+P`
+   - Type "Claude Code Workflow Studio: Open Editor"
+   - Press Enter
 
-1. Enter a workflow name in the top toolbar input field
-2. Click "Save" button
-3. The workflow is saved to `.vscode/workflows/<workflow-name>.json`
+**2. Create Your Workflow**
+   - **Add Nodes**: Drag Sub-Agent or AskUserQuestion nodes from the left palette onto the canvas
+   - **Configure**: Click a node to edit its properties in the right panel
+   - **Connect**: Drag from output ports (right) to input ports (left) to create flow
 
-#### Step 4: Export to .claude Format
+**3. Save & Export**
+   - Enter a workflow name in the toolbar
+   - Click **Save** to store as JSON in `.vscode/workflows/`
+   - Click **Export** to generate `.claude` files ready for Claude Code
 
-1. Click "Export" button in the toolbar
-2. If files already exist, you'll be prompted to confirm overwrite
-3. Generated files:
-   - `.claude/agents/<node-name>.md` - One file per Sub-Agent node
-   - `.claude/commands/<workflow-name>.md` - SlashCommand to execute the workflow
+## How It Works
 
-### Loading an Existing Workflow
+### Sub-Agent Nodes
+Configure autonomous AI agents with:
+- Custom system prompts
+- Tool permissions (Read, Write, Bash, etc.)
+- Model selection (Sonnet for balance, Opus for complex tasks, Haiku for speed)
 
-1. Click the refresh button (↻) to update the workflow list
-2. Select a workflow from the dropdown
-3. Click "Load" button
-4. The workflow will be displayed on the canvas
+### AskUserQuestion Nodes
+Create decision points where:
+- Users choose from 2-4 options
+- Each option branches to different Sub-Agents
+- Build dynamic, interactive workflows
 
-## Exported File Format
+### Export Format
+Generates ready-to-use files:
+- `.claude/agents/*.md` - Sub-Agent definitions
+- `.claude/commands/*.md` - SlashCommand to execute the workflow
 
-### Sub-Agent Configuration (`.claude/agents/*.md`)
+## Usage Examples
 
-```markdown
----
-name: data-analysis
-description: Analyze data and generate insights
-tools: Read,Write,Bash
-model: sonnet
----
+### Example 1: Data Analysis Pipeline
+1. **Collect Data** Sub-Agent → Gathers data from files
+2. **Ask User**: "Choose analysis type" → Statistical / Visual
+3. **Statistical Analysis** Sub-Agent OR **Data Visualization** Sub-Agent
+4. **Generate Report** Sub-Agent → Creates final output
 
-Your system prompt content here...
-```
+### Example 2: Code Review Workflow
+1. **Code Scanner** Sub-Agent → Identifies issues
+2. **Ask User**: "Priority level?" → Critical Only / All Issues
+3. **Filter Results** Sub-Agent
+4. **Generate Fix Suggestions** Sub-Agent
 
-### SlashCommand (`.claude/commands/*.md`)
+## FAQ
 
-```markdown
----
-description: Sample workflow
-allowed-tools: Task,AskUserQuestion
----
+**Q: What is Claude Code?**
+A: Claude Code is Anthropic's official CLI tool for building AI-powered workflows. This extension makes it easier to create and manage those workflows visually.
 
-Taskツールを使用して「data-analysis」Sub-Agentを実行してください。
+**Q: Do I need programming experience?**
+A: No! The visual editor is designed for anyone. Simply drag, drop, and configure nodes through the UI.
 
-AskUserQuestionツールを使用して以下の質問をユーザーに行ってください:
-- 質問: "次のステップを選択してください"
-- 選択肢:
-  - "レポート作成" → Taskツールで「report-generation」Sub-Agentを実行
-  - "データ可視化" → Taskツールで「data-visualization」Sub-Agentを実行
+**Q: Can I edit exported files manually?**
+A: Yes! Exported `.claude` files are plain markdown with frontmatter. Edit them directly if needed.
 
-ユーザーの選択に応じて、対応するSub-Agentを実行してください。
-```
+**Q: What if a workflow file already exists?**
+A: The extension will detect conflicts and ask for confirmation before overwriting any files.
 
-## Technical Stack
-
-### Extension Host (Backend)
-- TypeScript 5.x
-- VSCode Extension API
-- Node.js file system operations
-
-### Webview (Frontend)
-- React 18.x
-- React Flow - Visual node editor
-- Zustand - State management
-- Vite - Build tool
-
-## Development
-
-### Project Structure
-
-```
-cc-wf-studio/
-├── src/
-│   ├── extension/          # Extension Host code
-│   │   ├── commands/       # Command handlers
-│   │   └── services/       # Business logic
-│   ├── webview/            # React UI
-│   │   └── src/
-│   │       ├── components/ # React components
-│   │       ├── services/   # Client-side services
-│   │       └── stores/     # Zustand stores
-│   └── shared/             # Shared types
-├── specs/                  # Design documents
-└── tests/                  # Test files
-```
-
-### Build Commands
-
-```bash
-# Build everything
-npm run build
-
-# Build webview only
-npm run build:webview
-
-# Build extension only
-npm run build:extension
-
-# Watch mode for webview (dev server)
-npm run watch:webview
-
-# Watch mode for extension
-npm run watch
-```
-
-### Running Tests
-
-```bash
-npm test
-npm run lint
-```
-
-## Validation Rules
-
-### Workflow
-- Name: 1-100 characters, alphanumeric + hyphens/underscores only
-- Version: Semantic versioning (e.g., "1.0.0")
-- Nodes: Maximum 50 nodes per workflow
-
-### Sub-Agent Node
-- Node Name: 1-50 characters, alphanumeric + hyphens/underscores
-- Description: Required, 1-200 characters
-- Prompt: Required, 1-10000 characters
-- Model: sonnet, opus, or haiku
-- Tools: Optional, comma-separated string
-
-### AskUserQuestion Node
-- Node Name: 1-50 characters, alphanumeric + hyphens/underscores
-- Question Text: Required, 1-500 characters
-- Options: 2-4 options required
-  - Each option label: 1-50 characters
-  - Each option description: 1-200 characters
+**Q: How many nodes can I add?**
+A: Up to 50 nodes per workflow. Most workflows use 3-10 nodes.
 
 ## Troubleshooting
 
-### Workflow not saving
-- Check that the workflow name contains only alphanumeric characters, hyphens, and underscores
-- Ensure all required fields are filled in
-- Check the VSCode notification area for error messages
+**Workflow won't save**
+- Ensure workflow name contains only letters, numbers, hyphens, and underscores
+- Check all required fields are filled
+- Look for error messages in VSCode notifications
 
-### Export fails
-- Verify that all nodes have valid configurations
-- Check that node names are unique
-- Ensure you have write permissions to the `.claude` directory
+**Export fails**
+- Verify all nodes have valid configurations
+- Ensure node names are unique
+- Check write permissions for `.claude` directory
 
-### Load button doesn't work
-- Click the refresh button (↻) to reload the workflow list
-- Verify that the workflow file exists in `.vscode/workflows/`
-- Check that the JSON file is not corrupted
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+**Can't load workflow**
+- Click refresh button (↻) to update the list
+- Verify file exists in `.vscode/workflows/`
+- Check JSON file isn't corrupted
 
 ## License
 
-[Specify License Here]
+MIT License - see [LICENSE](./LICENSE) file for details
+
+Copyright (c) 2025 breaking-break
 
 ## Acknowledgments
 
-- Built with [React Flow](https://reactflow.dev/)
-- Powered by [Claude Code](https://claude.com/claude-code)
-- Inspired by AWS Step Functions visual workflow editor
-
-## Support
-
-For issues, questions, or suggestions:
-- Open an issue on GitHub
-- Check the [documentation](./docs/)
+Built with [React Flow](https://reactflow.dev/) • Powered by [Claude Code](https://claude.com/claude-code) • Inspired by [Dify](https://dify.ai/)
 
 ---
 
-**Made with Claude Code Workflow Studio** 🤖
+**Made with Claude Code Workflow Studio**

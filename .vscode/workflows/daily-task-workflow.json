@@ -1,0 +1,147 @@
+{
+  "id": "workflow-1762066256346",
+  "name": "daily-task-workflow",
+  "description": "Created with Workflow Studio",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "start-node-default",
+      "type": "start",
+      "name": "start-node-default",
+      "position": {
+        "x": 100,
+        "y": 200
+      },
+      "data": {
+        "label": "Start"
+      }
+    },
+    {
+      "id": "end-node-default",
+      "type": "end",
+      "name": "end-node-default",
+      "position": {
+        "x": 1170,
+        "y": 195
+      },
+      "data": {
+        "label": "End"
+      }
+    },
+    {
+      "id": "question-1762065541316",
+      "type": "askUserQuestion",
+      "name": "question-1762065541316",
+      "position": {
+        "x": 285,
+        "y": 150
+      },
+      "data": {
+        "questionText": "Ask user Task",
+        "options": [
+          {
+            "label": "daily report",
+            "description": "write a daily report",
+            "id": "opt-1762065544725-f9027il"
+          },
+          {
+            "label": "news",
+            "description": "catch up on the news",
+            "id": "opt-1762065544725-99s3p5n"
+          }
+        ],
+        "outputPorts": 2
+      }
+    },
+    {
+      "id": "agent-1762065720556",
+      "type": "subAgent",
+      "name": "news_briefing_agent-1762065720556",
+      "position": {
+        "x": 585,
+        "y": 300
+      },
+      "data": {
+        "description": "News Briefing Agent",
+        "prompt": "最近の時事ニュースについて調査する専門の人です。\nIT技術者がキャッチアップするべきニュースを調べて、レポートにまとめて。",
+        "model": "sonnet",
+        "outputPorts": 1,
+        "name": "news_briefing_agent-1762065720556"
+      }
+    },
+    {
+      "id": "prompt-1762065918375",
+      "type": "prompt",
+      "name": "prompt-1762065918375",
+      "position": {
+        "x": 660,
+        "y": 60
+      },
+      "data": {
+        "label": "Write Daily Report",
+        "prompt": "Enter your prompt template here.\n\nYou can use variables like {{variableName}}.",
+        "variables": {}
+      }
+    },
+    {
+      "id": "prompt-1762065934779",
+      "type": "prompt",
+      "name": "prompt-1762065934779",
+      "position": {
+        "x": 825,
+        "y": 300
+      },
+      "data": {
+        "label": "Readout News ",
+        "prompt": "Readout News Report",
+        "variables": {}
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "reactflow__edge-start-node-defaultout-question-1762065541316input",
+      "from": "start-node-default",
+      "to": "question-1762065541316",
+      "fromPort": "out",
+      "toPort": "input"
+    },
+    {
+      "id": "reactflow__edge-question-1762065541316branch-1-agent-1762065720556input",
+      "from": "question-1762065541316",
+      "to": "agent-1762065720556",
+      "fromPort": "branch-1",
+      "toPort": "input"
+    },
+    {
+      "id": "reactflow__edge-question-1762065541316branch-0-prompt-1762065918375in",
+      "from": "question-1762065541316",
+      "to": "prompt-1762065918375",
+      "fromPort": "branch-0",
+      "toPort": "in"
+    },
+    {
+      "id": "reactflow__edge-prompt-1762065918375out-end-node-defaultin",
+      "from": "prompt-1762065918375",
+      "to": "end-node-default",
+      "fromPort": "out",
+      "toPort": "in"
+    },
+    {
+      "id": "reactflow__edge-agent-1762065720556output-prompt-1762065934779in",
+      "from": "agent-1762065720556",
+      "to": "prompt-1762065934779",
+      "fromPort": "output",
+      "toPort": "in"
+    },
+    {
+      "id": "reactflow__edge-prompt-1762065934779out-end-node-defaultin",
+      "from": "prompt-1762065934779",
+      "to": "end-node-default",
+      "fromPort": "out",
+      "toPort": "in"
+    }
+  ],
+  "createdAt": "2025-11-02T06:50:56.346Z",
+  "updatedAt": "2025-11-02T06:50:56.346Z"
+}

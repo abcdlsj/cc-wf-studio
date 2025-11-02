@@ -561,106 +561,108 @@ const AskUserQuestionProperties: React.FC<{
       {/* Options */}
       {!data.useAiSuggestions && (
         <div>
-        <div
-          style={{
-            display: 'block',
-            fontSize: '12px',
-            fontWeight: 600,
-            color: 'var(--vscode-foreground)',
-            marginBottom: '6px',
-          }}
-        >
-          Options ({normalizedOptions.length}/4)
-        </div>
-
-        {normalizedOptions.map((option, index) => (
           <div
-            key={option.id}
             style={{
-              marginBottom: '12px',
-              padding: '12px',
-              backgroundColor: 'var(--vscode-editor-background)',
-              border: '1px solid var(--vscode-panel-border)',
-              borderRadius: '4px',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600 }}>Option {index + 1}</span>
-              {normalizedOptions.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => handleRemoveOption(index)}
-                  className="nodrag"
-                  style={{
-                    padding: '2px 6px',
-                    fontSize: '10px',
-                    backgroundColor: 'var(--vscode-button-secondaryBackground)',
-                    color: 'var(--vscode-button-secondaryForeground)',
-                    border: 'none',
-                    borderRadius: '2px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-            <input
-              type="text"
-              value={option.label}
-              onChange={(e) => handleUpdateOption(index, 'label', e.target.value)}
-              placeholder="Label"
-              className="nodrag"
-              style={{
-                width: '100%',
-                padding: '4px 6px',
-                marginBottom: '6px',
-                backgroundColor: 'var(--vscode-input-background)',
-                color: 'var(--vscode-input-foreground)',
-                border: '1px solid var(--vscode-input-border)',
-                borderRadius: '2px',
-                fontSize: '12px',
-              }}
-            />
-            <input
-              type="text"
-              value={option.description}
-              onChange={(e) => handleUpdateOption(index, 'description', e.target.value)}
-              placeholder="Description"
-              className="nodrag"
-              style={{
-                width: '100%',
-                padding: '4px 6px',
-                backgroundColor: 'var(--vscode-input-background)',
-                color: 'var(--vscode-input-foreground)',
-                border: '1px solid var(--vscode-input-border)',
-                borderRadius: '2px',
-                fontSize: '12px',
-              }}
-            />
-          </div>
-        ))}
-
-        {normalizedOptions.length < 4 && (
-          <button
-            type="button"
-            onClick={handleAddOption}
-            className="nodrag"
-            style={{
-              width: '100%',
-              padding: '8px',
-              backgroundColor: 'var(--vscode-button-secondaryBackground)',
-              color: 'var(--vscode-button-secondaryForeground)',
-              border: '1px solid var(--vscode-button-border)',
-              borderRadius: '4px',
-              cursor: 'pointer',
+              display: 'block',
               fontSize: '12px',
+              fontWeight: 600,
+              color: 'var(--vscode-foreground)',
+              marginBottom: '6px',
             }}
           >
-            + Add Option
-          </button>
-        )}
-      </div>
+            Options ({normalizedOptions.length}/4)
+          </div>
+
+          {normalizedOptions.map((option, index) => (
+            <div
+              key={option.id}
+              style={{
+                marginBottom: '12px',
+                padding: '12px',
+                backgroundColor: 'var(--vscode-editor-background)',
+                border: '1px solid var(--vscode-panel-border)',
+                borderRadius: '4px',
+              }}
+            >
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}
+              >
+                <span style={{ fontSize: '11px', fontWeight: 600 }}>Option {index + 1}</span>
+                {normalizedOptions.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveOption(index)}
+                    className="nodrag"
+                    style={{
+                      padding: '2px 6px',
+                      fontSize: '10px',
+                      backgroundColor: 'var(--vscode-button-secondaryBackground)',
+                      color: 'var(--vscode-button-secondaryForeground)',
+                      border: 'none',
+                      borderRadius: '2px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                value={option.label}
+                onChange={(e) => handleUpdateOption(index, 'label', e.target.value)}
+                placeholder="Label"
+                className="nodrag"
+                style={{
+                  width: '100%',
+                  padding: '4px 6px',
+                  marginBottom: '6px',
+                  backgroundColor: 'var(--vscode-input-background)',
+                  color: 'var(--vscode-input-foreground)',
+                  border: '1px solid var(--vscode-input-border)',
+                  borderRadius: '2px',
+                  fontSize: '12px',
+                }}
+              />
+              <input
+                type="text"
+                value={option.description}
+                onChange={(e) => handleUpdateOption(index, 'description', e.target.value)}
+                placeholder="Description"
+                className="nodrag"
+                style={{
+                  width: '100%',
+                  padding: '4px 6px',
+                  backgroundColor: 'var(--vscode-input-background)',
+                  color: 'var(--vscode-input-foreground)',
+                  border: '1px solid var(--vscode-input-border)',
+                  borderRadius: '2px',
+                  fontSize: '12px',
+                }}
+              />
+            </div>
+          ))}
+
+          {normalizedOptions.length < 4 && (
+            <button
+              type="button"
+              onClick={handleAddOption}
+              className="nodrag"
+              style={{
+                width: '100%',
+                padding: '8px',
+                backgroundColor: 'var(--vscode-button-secondaryBackground)',
+                color: 'var(--vscode-button-secondaryForeground)',
+                border: '1px solid var(--vscode-button-border)',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+              }}
+            >
+              + Add Option
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

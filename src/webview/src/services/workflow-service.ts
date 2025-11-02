@@ -47,7 +47,7 @@ export function serializeWorkflow(
     id: `workflow-${Date.now()}`,
     name: workflowName,
     description: workflowDescription,
-    version: '1.0.0',
+    version: '0.0.1',
     nodes: workflowNodes,
     connections,
     createdAt: new Date(),
@@ -200,7 +200,11 @@ function validateNode(node: WorkflowNode): void {
           throw new Error(`Node "${node.id}" option label must be 1-50 characters`);
         }
 
-        if (!option.description || option.description.length < 1 || option.description.length > 200) {
+        if (
+          !option.description ||
+          option.description.length < 1 ||
+          option.description.length > 200
+        ) {
           throw new Error(`Node "${node.id}" option description must be 1-200 characters`);
         }
       }

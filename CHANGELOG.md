@@ -1,3 +1,15 @@
+## [2.17.0](https://github.com/breaking-brake/cc-wf-studio/compare/v2.16.1...v2.17.0) (2025-11-30)
+
+### Features
+
+* add Terms of Service link to Slack connection dialog ([#179](https://github.com/breaking-brake/cc-wf-studio/issues/179)) ([6783507](https://github.com/breaking-brake/cc-wf-studio/commit/67835074e3e8a2c9c61959806d3a72455a953fe0))
+* display Slack author as clickable mention ([#180](https://github.com/breaking-brake/cc-wf-studio/issues/180)) ([60f220f](https://github.com/breaking-brake/cc-wf-studio/commit/60f220f284c71ece653228758c5364bb4b2b1110))
+
+### Bug Fixes
+
+* update token deletion wording to use auth token ([#178](https://github.com/breaking-brake/cc-wf-studio/issues/178)) ([bcc94d0](https://github.com/breaking-brake/cc-wf-studio/commit/bcc94d00ac05a1989d2c27d56b6ba3bc4d9471b5))
+* use User Token for bot membership check ([#181](https://github.com/breaking-brake/cc-wf-studio/issues/181)) ([bd65809](https://github.com/breaking-brake/cc-wf-studio/commit/bd65809e95b41aabad5df9d44bd3e4d0cd55cbc7))
+
 ## [2.16.1](https://github.com/breaking-brake/cc-wf-studio/compare/v2.16.0...v2.16.1) (2025-11-30)
 
 ### Bug Fixes

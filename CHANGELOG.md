@@ -1,3 +1,9 @@
+## [3.5.2](https://github.com/breaking-brake/cc-wf-studio/compare/v3.5.1...v3.5.2) (2025-12-10)
+
+### Improvements
+
+* add ellipsis truncation for workflow name fields ([#246](https://github.com/breaking-brake/cc-wf-studio/issues/246)) ([3ff63d6](https://github.com/breaking-brake/cc-wf-studio/commit/3ff63d6ab01126b11bd8f5683d2d66c4d2a8d0fe))
+
 ## [3.5.1](https://github.com/breaking-brake/cc-wf-studio/compare/v3.5.0...v3.5.1) (2025-12-09)
 
 ### Improvements

@@ -12,8 +12,41 @@ import type { ConversationHistory, ConversationMessage } from '@shared/types/wor
 import { create } from 'zustand';
 import { getSetting, setSetting } from '../services/codebase-search-service';
 
-// localStorage key for model selection persistence
+// localStorage keys
 const MODEL_STORAGE_KEY = 'cc-wf-studio.refinement.selectedModel';
+const ALLOWED_TOOLS_STORAGE_KEY = 'cc-wf-studio.refinement.allowedTools';
+
+// Available tools for Claude Code CLI
+export const AVAILABLE_TOOLS = [
+  'AskUserQuestion',
+  'Bash',
+  'BashOutput',
+  'Edit',
+  'ExitPlanMode',
+  'Glob',
+  'Grep',
+  'KillShell',
+  'MCPSearch',
+  'NotebookEdit',
+  'Read',
+  'Skill',
+  'SlashCommand',
+  'Task',
+  'TodoWrite',
+  'WebFetch',
+  'WebSearch',
+  'Write',
+] as const;
+
+// Default allowed tools (read-only tools for security)
+export const DEFAULT_ALLOWED_TOOLS: string[] = [
+  'Read',
+  'Grep',
+  'Glob',
+  'WebSearch',
+  'WebFetch',
+  'TodoWrite',
+];
 
 /**
  * Load selected model from localStorage
@@ -37,6 +70,36 @@ function loadModelFromStorage(): ClaudeModel {
 function saveModelToStorage(model: ClaudeModel): void {
   try {
     localStorage.setItem(MODEL_STORAGE_KEY, model);
+  } catch {
+    // localStorage may not be available in some contexts
+  }
+}
+
+/**
+ * Load allowed tools from localStorage
+ * Returns DEFAULT_ALLOWED_TOOLS if no value is stored or value is invalid
+ */
+function loadAllowedToolsFromStorage(): string[] {
+  try {
+    const saved = localStorage.getItem(ALLOWED_TOOLS_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.every((t) => typeof t === 'string')) {
+        return parsed;
+      }
+    }
+  } catch {
+    // localStorage may not be available or JSON parse failed
+  }
+  return DEFAULT_ALLOWED_TOOLS;
+}
+
+/**
+ * Save allowed tools to localStorage
+ */
+function saveAllowedToolsToStorage(tools: string[]): void {
+  try {
+    localStorage.setItem(ALLOWED_TOOLS_STORAGE_KEY, JSON.stringify(tools));
   } catch {
     // localStorage may not be available in some contexts
   }
@@ -70,6 +133,7 @@ interface RefinementStore {
   useSkills: boolean;
   timeoutSeconds: number;
   selectedModel: ClaudeModel;
+  allowedTools: string[];
 
   // SubAgentFlow Refinement State
   targetType: 'workflow' | 'subAgentFlow';
@@ -88,6 +152,9 @@ interface RefinementStore {
   toggleUseSkills: () => void;
   setTimeoutSeconds: (seconds: number) => void;
   setSelectedModel: (model: ClaudeModel) => void;
+  setAllowedTools: (tools: string[]) => void;
+  toggleAllowedTool: (toolName: string) => void;
+  resetAllowedTools: () => void;
   initConversation: () => void;
   loadConversationHistory: (history: ConversationHistory | undefined) => void;
   setTargetContext: (
@@ -140,6 +207,9 @@ interface RefinementStore {
   setUseCodebaseSearch: (enabled: boolean) => void;
   loadCodebaseSearchSetting: () => Promise<void>;
 
+  // Tool Execution Actions (Tool Loading Animation)
+  updateMessageToolInfo: (messageId: string, toolInfo: string | null) => void;
+
   // Computed
   canSend: () => boolean;
   shouldShowWarning: () => boolean;
@@ -163,6 +233,7 @@ export const useRefinementStore = create<RefinementStore>((set, get) => ({
   useSkills: true,
   timeoutSeconds: 0, // Default timeout: Unlimited (0 = no timeout)
   selectedModel: loadModelFromStorage(), // Load from localStorage, default: 'haiku'
+  allowedTools: loadAllowedToolsFromStorage(), // Load from localStorage, default: DEFAULT_ALLOWED_TOOLS
 
   // SubAgentFlow Refinement Initial State
   targetType: 'workflow',
@@ -195,6 +266,25 @@ export const useRefinementStore = create<RefinementStore>((set, get) => ({
   setSelectedModel: (model: ClaudeModel) => {
     set({ selectedModel: model });
     saveModelToStorage(model);
+  },
+
+  setAllowedTools: (tools: string[]) => {
+    set({ allowedTools: tools });
+    saveAllowedToolsToStorage(tools);
+  },
+
+  toggleAllowedTool: (toolName: string) => {
+    const currentTools = get().allowedTools;
+    const newTools = currentTools.includes(toolName)
+      ? currentTools.filter((t) => t !== toolName)
+      : [...currentTools, toolName];
+    set({ allowedTools: newTools });
+    saveAllowedToolsToStorage(newTools);
+  },
+
+  resetAllowedTools: () => {
+    set({ allowedTools: DEFAULT_ALLOWED_TOOLS });
+    saveAllowedToolsToStorage(DEFAULT_ALLOWED_TOOLS);
   },
 
   initConversation: () => {
@@ -442,6 +532,26 @@ export const useRefinementStore = create<RefinementStore>((set, get) => ({
     if (value !== undefined) {
       set({ useCodebaseSearch: value });
     }
+  },
+
+  // Tool Execution Actions (Tool Loading Animation)
+  updateMessageToolInfo: (messageId: string, toolInfo: string | null) => {
+    const history = get().conversationHistory;
+    if (!history) {
+      return;
+    }
+
+    const updatedMessages = history.messages.map((msg) =>
+      msg.id === messageId ? { ...msg, toolInfo } : msg
+    );
+
+    set({
+      conversationHistory: {
+        ...history,
+        messages: updatedMessages,
+        updatedAt: new Date().toISOString(),
+      },
+    });
   },
 
   // Computed Methods

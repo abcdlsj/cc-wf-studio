@@ -226,6 +226,8 @@ export interface RefineWorkflowPayload {
   subAgentFlowId?: string;
   /** Claude model to use (default: 'sonnet') */
   model?: ClaudeModel;
+  /** Allowed tools for Claude Code CLI (optional, e.g., ['Read', 'Grep', 'Glob', 'WebSearch', 'WebFetch']) */
+  allowedTools?: string[];
 }
 
 export interface RefinementSuccessPayload {
@@ -302,6 +304,8 @@ export interface RefinementProgressPayload {
   accumulatedText: string;
   /** Explanatory text only (no tool info) - for preserving in chat history */
   explanatoryText?: string;
+  /** Content type from Claude streaming response ('tool_use' or 'text') */
+  contentType?: 'tool_use' | 'text';
   /** Progress timestamp */
   timestamp: string; // ISO 8601
 }

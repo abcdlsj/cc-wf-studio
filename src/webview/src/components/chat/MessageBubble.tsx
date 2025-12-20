@@ -17,6 +17,7 @@ import { getErrorMessageInfo } from '../../utils/error-messages';
 import { IndeterminateProgressBar } from '../common/IndeterminateProgressBar';
 import { CodebaseSearchResults } from './CodebaseSearchResults';
 import { ProgressBar } from './ProgressBar';
+import { ToolExecutionIndicator } from './ToolExecutionIndicator';
 
 interface MessageBubbleProps {
   message: ConversationMessage;
@@ -132,16 +133,23 @@ export function MessageBubble({ message, onRetry }: MessageBubbleProps) {
         )}
 
         {/* Loading state */}
-        {isLoading &&
-          (timeoutSeconds === 0 ? (
-            <IndeterminateProgressBar label={t('refinement.aiProcessing')} />
-          ) : (
-            <ProgressBar
-              isProcessing={true}
-              label={t('refinement.aiProcessing')}
-              maxSeconds={timeoutSeconds}
-            />
-          ))}
+        {isLoading && (
+          <>
+            {/* Tool execution indicator (only during tool execution) */}
+            {message.toolInfo && !isUser && <ToolExecutionIndicator toolInfo={message.toolInfo} />}
+
+            {/* Progress bar */}
+            {timeoutSeconds === 0 ? (
+              <IndeterminateProgressBar label={t('refinement.aiProcessing')} />
+            ) : (
+              <ProgressBar
+                isProcessing={true}
+                label={t('refinement.aiProcessing')}
+                maxSeconds={timeoutSeconds}
+              />
+            )}
+          </>
+        )}
 
         {/* Issue #265: Codebase search results (AI messages only) */}
         {searchResults && searchResults.results.length > 0 && !isLoading && !isError && (

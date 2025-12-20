@@ -85,6 +85,8 @@ export function RefinementChatPanel({
     isIndexReady,
     useCodebaseSearch,
     selectedModel,
+    updateMessageToolInfo,
+    allowedTools,
   } = useRefinementStore();
 
   const { activeWorkflow, updateWorkflow, subAgentFlows, updateSubAgentFlow, setNodes, setEdges } =
@@ -239,7 +241,8 @@ export function RefinementChatPanel({
           requestId,
           useSkills,
           timeoutSeconds * 1000,
-          selectedModel
+          selectedModel,
+          allowedTools
         );
 
         if (result.type === 'success') {
@@ -314,8 +317,19 @@ export function RefinementChatPanel({
 
         const onProgress: RefinementProgressCallback = (payload) => {
           hasReceivedProgress = true;
-          // Update message content with display text (may include tool info)
-          updateMessageContent(aiMessageId, payload.accumulatedText);
+
+          // Tool Loading Animation: Use contentType from Extension to detect tool execution
+          if (payload.contentType === 'tool_use') {
+            // Tool execution in progress
+            updateMessageToolInfo(aiMessageId, payload.chunk);
+          } else if (payload.contentType === 'text') {
+            // Text content arrived = tool execution completed
+            updateMessageToolInfo(aiMessageId, null);
+          }
+
+          // Update message content with explanatory text only (tool info shown separately by ToolExecutionIndicator)
+          // Use accumulatedText as fallback if explanatoryText is undefined
+          updateMessageContent(aiMessageId, payload.explanatoryText ?? payload.accumulatedText);
           // Track explanatory text separately (for preserving in chat history)
           // Note: explanatoryText can be empty string if AI only uses tools
           if (payload.explanatoryText !== undefined) {
@@ -338,7 +352,8 @@ export function RefinementChatPanel({
           useSkills,
           timeoutSeconds * 1000,
           onProgress,
-          selectedModel
+          selectedModel,
+          allowedTools
         );
 
         if (result.type === 'success') {
@@ -388,14 +403,15 @@ export function RefinementChatPanel({
             }
           }
         } else if (result.type === 'clarification') {
-          if (hasReceivedProgress && latestExplanatoryText) {
-            // Replace display text with explanatory text only
-            updateMessageContent(aiMessageId, latestExplanatoryText);
-            updateMessageLoadingState(aiMessageId, false);
+          // Always use the complete clarification message from result.payload
+          updateMessageContent(aiMessageId, result.payload.aiMessage.content);
+          updateMessageLoadingState(aiMessageId, false);
+
+          if (hasReceivedProgress) {
+            // Streaming occurred, use finishProcessing to preserve frontend messages
             finishProcessing();
           } else {
-            updateMessageContent(aiMessageId, result.payload.aiMessage.content);
-            updateMessageLoadingState(aiMessageId, false);
+            // No streaming, update conversation history normally
             handleRefinementSuccess(
               result.payload.aiMessage,
               result.payload.updatedConversationHistory
@@ -457,7 +473,8 @@ export function RefinementChatPanel({
           requestId,
           useSkills,
           timeoutSeconds * 1000,
-          selectedModel
+          selectedModel,
+          allowedTools
         );
 
         if (result.type === 'success') {
@@ -507,8 +524,19 @@ export function RefinementChatPanel({
 
         const onProgress: RefinementProgressCallback = (payload) => {
           hasReceivedProgress = true;
-          // Update message content with display text (may include tool info)
-          updateMessageContent(aiMessageId, payload.accumulatedText);
+
+          // Tool Loading Animation: Use contentType from Extension to detect tool execution
+          if (payload.contentType === 'tool_use') {
+            // Tool execution in progress
+            updateMessageToolInfo(aiMessageId, payload.chunk);
+          } else if (payload.contentType === 'text') {
+            // Text content arrived = tool execution completed
+            updateMessageToolInfo(aiMessageId, null);
+          }
+
+          // Update message content with explanatory text only (tool info shown separately by ToolExecutionIndicator)
+          // Use accumulatedText as fallback if explanatoryText is undefined
+          updateMessageContent(aiMessageId, payload.explanatoryText ?? payload.accumulatedText);
           // Track explanatory text separately (for preserving in chat history)
           // Note: explanatoryText can be empty string if AI only uses tools
           if (payload.explanatoryText !== undefined) {
@@ -531,7 +559,8 @@ export function RefinementChatPanel({
           useSkills,
           timeoutSeconds * 1000,
           onProgress,
-          selectedModel
+          selectedModel,
+          allowedTools
         );
 
         if (result.type === 'success') {
@@ -562,14 +591,15 @@ export function RefinementChatPanel({
             );
           }
         } else if (result.type === 'clarification') {
-          if (hasReceivedProgress && latestExplanatoryText) {
-            // Replace display text with explanatory text only
-            updateMessageContent(aiMessageId, latestExplanatoryText);
-            updateMessageLoadingState(aiMessageId, false);
+          // Always use the complete clarification message from result.payload
+          updateMessageContent(aiMessageId, result.payload.aiMessage.content);
+          updateMessageLoadingState(aiMessageId, false);
+
+          if (hasReceivedProgress) {
+            // Streaming occurred, use finishProcessing to preserve frontend messages
             finishProcessing();
           } else {
-            updateMessageContent(aiMessageId, result.payload.aiMessage.content);
-            updateMessageLoadingState(aiMessageId, false);
+            // No streaming, update conversation history normally
             handleRefinementSuccess(
               result.payload.aiMessage,
               result.payload.updatedConversationHistory

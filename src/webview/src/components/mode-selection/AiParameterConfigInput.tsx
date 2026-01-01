@@ -7,12 +7,14 @@
  * Based on: specs/001-mcp-natural-language-mode/tasks.md T015, T035
  */
 
+import { useState } from 'react';
 import { useTranslation } from '../../i18n/i18n-context';
 import type { WebviewTranslationKeys } from '../../i18n/translation-keys';
 import {
   useDebouncedValidation,
   validateParameterDescription,
 } from '../../utils/natural-language-validator';
+import { EditInEditorButton } from '../common/EditInEditorButton';
 
 interface AiParameterConfigInputProps {
   value: string;
@@ -40,6 +42,7 @@ export function AiParameterConfigInput({
   showValidation = false,
 }: AiParameterConfigInputProps) {
   const { t } = useTranslation();
+  const [isEditingInEditor, setIsEditingInEditor] = useState(false);
 
   // Real-time debounced validation (300ms delay)
   const debouncedError = useDebouncedValidation(value, validateParameterDescription, 300);
@@ -50,19 +53,33 @@ export function AiParameterConfigInput({
 
   return (
     <div>
-      {/* Label */}
-      <label
-        htmlFor="nl-param-input"
+      {/* Label with Edit in Editor button */}
+      <div
         style={{
-          display: 'block',
-          fontSize: '13px',
-          fontWeight: 'bold',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: '8px',
-          color: 'var(--vscode-foreground)',
         }}
       >
-        {t('mcp.naturalLanguage.paramDescription.label')}
-      </label>
+        <label
+          htmlFor="nl-param-input"
+          style={{
+            fontSize: '13px',
+            fontWeight: 'bold',
+            color: 'var(--vscode-foreground)',
+          }}
+        >
+          {t('mcp.naturalLanguage.paramDescription.label')}
+        </label>
+        <EditInEditorButton
+          content={value}
+          onContentUpdated={onChange}
+          label={t('mcp.naturalLanguage.paramDescription.label')}
+          language="plaintext"
+          onEditingStateChange={setIsEditingInEditor}
+        />
+      </div>
 
       {/* Text Area */}
       <textarea
@@ -70,6 +87,7 @@ export function AiParameterConfigInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={t('mcp.naturalLanguage.paramDescription.placeholder')}
+        readOnly={isEditingInEditor}
         style={{
           width: '100%',
           minHeight: '80px',
@@ -84,6 +102,8 @@ export function AiParameterConfigInput({
           borderRadius: '4px',
           resize: 'vertical',
           outline: 'none',
+          opacity: isEditingInEditor ? 0.5 : 1,
+          cursor: isEditingInEditor ? 'not-allowed' : 'text',
         }}
         onFocus={(e) => {
           if (!showError) {

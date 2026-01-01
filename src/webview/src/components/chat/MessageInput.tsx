@@ -6,14 +6,16 @@
  * Updated: Phase 3.2 - Added progress bar during processing
  * Updated: Phase 3.7 - Removed progress bar (moved to message bubble)
  * Updated: Controlled Component - Accept input state from props
+ * Updated: Added "Edit in Editor" button for VSCode native editing
  */
 
 import type React from 'react';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { useResponsiveFonts } from '../../contexts/ResponsiveFontContext';
 import { useTranslation } from '../../i18n/i18n-context';
 import { cancelWorkflowRefinement } from '../../services/refinement-service';
 import { useRefinementStore } from '../../stores/refinement-store';
+import { EditInEditorButton } from '../common/EditInEditorButton';
 
 const MAX_MESSAGE_LENGTH = 5000;
 const MIN_MESSAGE_LENGTH = 1;
@@ -38,6 +40,7 @@ export function MessageInput({ onSend, inputState }: MessageInputProps) {
   const textareaId = useId();
   const fontSizes = useResponsiveFonts();
   const storeState = useRefinementStore();
+  const [isEditingInEditor, setIsEditingInEditor] = useState(false);
 
   // Use props if provided (controlled mode), otherwise use store (uncontrolled mode)
   const currentInput = inputState?.currentInput ?? storeState.currentInput;
@@ -85,6 +88,7 @@ export function MessageInput({ onSend, inputState }: MessageInputProps) {
         onKeyDown={handleKeyDown}
         placeholder={t('refinement.inputPlaceholder')}
         disabled={isProcessing}
+        readOnly={isEditingInEditor}
         style={{
           width: '100%',
           minHeight: '80px',
@@ -96,6 +100,8 @@ export function MessageInput({ onSend, inputState }: MessageInputProps) {
           fontSize: `${fontSizes.base}px`,
           fontFamily: 'var(--vscode-font-family)',
           resize: 'vertical',
+          opacity: isEditingInEditor ? 0.5 : 1,
+          cursor: isEditingInEditor ? 'not-allowed' : 'text',
         }}
         aria-label={t('refinement.inputPlaceholder')}
       />
@@ -108,16 +114,32 @@ export function MessageInput({ onSend, inputState }: MessageInputProps) {
           marginTop: '8px',
         }}
       >
-        {/* Character count */}
+        {/* Character count and Edit in Editor button */}
         <div
           style={{
-            fontSize: `${fontSizes.button}px`,
-            color: isTooLong
-              ? 'var(--vscode-errorForeground)'
-              : 'var(--vscode-descriptionForeground)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
           }}
         >
-          {currentInput.length}/{MAX_MESSAGE_LENGTH}
+          <div
+            style={{
+              fontSize: `${fontSizes.button}px`,
+              color: isTooLong
+                ? 'var(--vscode-errorForeground)'
+                : 'var(--vscode-descriptionForeground)',
+            }}
+          >
+            {currentInput.length}/{MAX_MESSAGE_LENGTH}
+          </div>
+          <EditInEditorButton
+            content={currentInput}
+            onContentUpdated={setInput}
+            label={t('refinement.inputPlaceholder')}
+            language="markdown"
+            disabled={isProcessing}
+            onEditingStateChange={setIsEditingInEditor}
+          />
         </div>
 
         {/* Send/Cancel button */}

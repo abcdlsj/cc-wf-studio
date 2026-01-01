@@ -7,12 +7,14 @@
  * Based on: specs/001-mcp-natural-language-mode/tasks.md T014, T047
  */
 
+import { useState } from 'react';
 import { useTranslation } from '../../i18n/i18n-context';
 import type { WebviewTranslationKeys } from '../../i18n/translation-keys';
 import {
   useDebouncedValidation,
   validateTaskDescription,
 } from '../../utils/natural-language-validator';
+import { EditInEditorButton } from '../common/EditInEditorButton';
 
 interface AiToolSelectionInputProps {
   value: string;
@@ -40,6 +42,7 @@ export function AiToolSelectionInput({
   showValidation = false,
 }: AiToolSelectionInputProps) {
   const { t } = useTranslation();
+  const [isEditingInEditor, setIsEditingInEditor] = useState(false);
 
   // Real-time debounced validation (300ms delay)
   const debouncedError = useDebouncedValidation(value, validateTaskDescription, 300);
@@ -50,19 +53,33 @@ export function AiToolSelectionInput({
 
   return (
     <div>
-      {/* Label */}
-      <label
-        htmlFor="nl-task-input"
+      {/* Label with Edit in Editor button */}
+      <div
         style={{
-          display: 'block',
-          fontSize: '13px',
-          fontWeight: 'bold',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: '8px',
-          color: 'var(--vscode-foreground)',
         }}
       >
-        {t('mcp.naturalLanguage.taskDescription.label')}
-      </label>
+        <label
+          htmlFor="nl-task-input"
+          style={{
+            fontSize: '13px',
+            fontWeight: 'bold',
+            color: 'var(--vscode-foreground)',
+          }}
+        >
+          {t('mcp.naturalLanguage.taskDescription.label')}
+        </label>
+        <EditInEditorButton
+          content={value}
+          onContentUpdated={onChange}
+          label={t('mcp.naturalLanguage.taskDescription.label')}
+          language="plaintext"
+          onEditingStateChange={setIsEditingInEditor}
+        />
+      </div>
 
       {/* Text Area */}
       <textarea
@@ -70,6 +87,7 @@ export function AiToolSelectionInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={t('mcp.naturalLanguage.taskDescription.placeholder')}
+        readOnly={isEditingInEditor}
         style={{
           width: '100%',
           minHeight: '120px',
@@ -84,6 +102,8 @@ export function AiToolSelectionInput({
           borderRadius: '4px',
           resize: 'vertical',
           outline: 'none',
+          opacity: isEditingInEditor ? 0.5 : 1,
+          cursor: isEditingInEditor ? 'not-allowed' : 'text',
         }}
         onFocus={(e) => {
           if (!showError) {

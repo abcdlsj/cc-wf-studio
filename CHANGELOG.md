@@ -1,3 +1,9 @@
+## [3.12.0](https://github.com/breaking-brake/cc-wf-studio/compare/v3.11.3...v3.12.0) (2026-01-03)
+
+### Features
+
+* add workflow preview with CustomTextEditorProvider ([#357](https://github.com/breaking-brake/cc-wf-studio/issues/357)) ([adc3081](https://github.com/breaking-brake/cc-wf-studio/commit/adc30815de228b5e2cf4bfc4a42758d7852a7b84))
+
 ## [3.11.3](https://github.com/breaking-brake/cc-wf-studio/compare/v3.11.2...v3.11.3) (2026-01-02)
 
 ### Bug Fixes

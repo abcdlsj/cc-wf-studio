@@ -1,3 +1,9 @@
+## [3.13.0](https://github.com/breaking-brake/cc-wf-studio/compare/v3.12.10...v3.13.0) (2026-01-09)
+
+### Features
+
+* add session continuation support for AI refinement ([#408](https://github.com/breaking-brake/cc-wf-studio/issues/408)) ([4dd8812](https://github.com/breaking-brake/cc-wf-studio/commit/4dd8812222d82a64842a4d65c8a65a3e08e81c2c)), closes [#407](https://github.com/breaking-brake/cc-wf-studio/issues/407)
+
 ## [3.12.10](https://github.com/breaking-brake/cc-wf-studio/compare/v3.12.9...v3.12.10) (2026-01-08)
 
 ### Bug Fixes

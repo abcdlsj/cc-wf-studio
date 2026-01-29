@@ -7,6 +7,11 @@
  */
 
 /**
+ * MCP configuration source provider
+ */
+export type McpConfigSource = 'claude' | 'copilot' | 'codex';
+
+/**
  * MCP server reference information (from 'claude mcp list')
  */
 export interface McpServerReference {
@@ -16,8 +21,8 @@ export interface McpServerReference {
   name: string;
   /** Configuration scope */
   scope: 'user' | 'project' | 'enterprise';
-  /** Connection status */
-  status: 'connected' | 'disconnected';
+  /** Connection status (only available for Claude Code servers) */
+  status?: 'connected' | 'disconnected';
   /** Executable command */
   command: string;
   /** Command arguments */
@@ -26,6 +31,8 @@ export interface McpServerReference {
   type: 'stdio' | 'sse' | 'http';
   /** Environment variables (optional) */
   environment?: Record<string, string>;
+  /** Source provider (defaults to 'claude' if undefined for backwards compatibility) */
+  source?: McpConfigSource;
 }
 
 /**
@@ -164,6 +171,8 @@ export interface PreservedManualParameterConfig {
 export interface McpNodeData {
   /** MCP server identifier (from 'claude mcp list') */
   serverId: string;
+  /** Source provider of the MCP server (claude, copilot, codex) */
+  source?: McpConfigSource;
   /** Tool function name from the MCP server */
   toolName: string;
   /** Human-readable description of the tool's functionality */

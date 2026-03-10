@@ -210,10 +210,10 @@ export function registerOpenEditorCommand(
         mcpManager.setWebview(currentPanel.webview);
       }
 
-      // Check if user has accepted terms of use (version-based)
-      const CURRENT_TERMS_VERSION = 2;
+      // Detect first-time user (for onboarding tour)
       const acceptedVersion = context.globalState.get<number>('acceptedTermsVersion', 0);
-      const hasAcceptedTerms = acceptedVersion >= CURRENT_TERMS_VERSION;
+      const legacyAccepted = context.globalState.get<boolean>('hasAcceptedTerms', false);
+      const isFirstTimeUser = acceptedVersion === 0 && !legacyAccepted;
 
       // Store import params for use when WEBVIEW_READY is received
       // This replaces the unreliable setTimeout-based approach (fixes Issue #396)
@@ -260,7 +260,7 @@ export function registerOpenEditorCommand(
               webview.postMessage({
                 type: 'INITIAL_STATE',
                 payload: {
-                  hasAcceptedTerms,
+                  isFirstTimeUser,
                   unreadReleaseCount: showWhatsNewBadge ? unreadReleaseCount : 0,
                   showWhatsNewBadge,
                 },
@@ -810,25 +810,6 @@ export function registerOpenEditorCommand(
             case 'STATE_UPDATE':
               // State update from webview (for persistence)
               console.log('STATE_UPDATE:', message.payload);
-              break;
-
-            case 'ACCEPT_TERMS':
-              // User accepted terms of use (save current version)
-              await context.globalState.update('acceptedTermsVersion', CURRENT_TERMS_VERSION);
-              // Update webview with new state (unreadReleaseCount stays at whatever was set in INITIAL_STATE)
-              webview.postMessage({
-                type: 'INITIAL_STATE',
-                payload: {
-                  hasAcceptedTerms: true,
-                  unreadReleaseCount: 0,
-                  showWhatsNewBadge: context.globalState.get<boolean>('showWhatsNewBadge', true),
-                },
-              });
-              break;
-
-            case 'CANCEL_TERMS':
-              // User cancelled terms of use - close the panel
-              currentPanel?.dispose();
               break;
 
             case 'CONFIRM_OVERWRITE':

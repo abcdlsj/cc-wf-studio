@@ -1,3 +1,9 @@
+## [3.28.0](https://github.com/breaking-brake/cc-wf-studio/compare/v3.27.1...v3.28.0) (2026-03-16)
+
+### Features
+
+* add Sub-Agent creation dialog with deferred file creation ([#646](https://github.com/breaking-brake/cc-wf-studio/issues/646)) ([f6d8b9f](https://github.com/breaking-brake/cc-wf-studio/commit/f6d8b9f4296eb93bf0207c85f30f9099bc12c748))
+
 ## [3.27.1](https://github.com/breaking-brake/cc-wf-studio/compare/v3.27.0...v3.27.1) (2026-03-10)
 
 ### Bug Fixes

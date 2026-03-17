@@ -1,3 +1,10 @@
+## [3.29.2](https://github.com/breaking-brake/cc-wf-studio/compare/v3.29.1...v3.29.2) (2026-03-17)
+
+### Bug Fixes
+
+* add GroupNode/CodexNode and icons to diff preview ([#658](https://github.com/breaking-brake/cc-wf-studio/issues/658)) ([75ba2bb](https://github.com/breaking-brake/cc-wf-studio/commit/75ba2bbe149e3f6cc7d1d99efef22db6a406f657))
+* support plugin skills in workflow detection and export ([#651](https://github.com/breaking-brake/cc-wf-studio/issues/651)) ([#659](https://github.com/breaking-brake/cc-wf-studio/issues/659)) ([68d7aec](https://github.com/breaking-brake/cc-wf-studio/commit/68d7aec6c12670f1f5836a9be8edaad48e968777))
+
 ## [3.29.1](https://github.com/breaking-brake/cc-wf-studio/compare/v3.29.0...v3.29.1) (2026-03-17)
 
 ### Improvements

@@ -1,3 +1,10 @@
+## [3.29.1](https://github.com/breaking-brake/cc-wf-studio/compare/v3.29.0...v3.29.1) (2026-03-17)
+
+### Improvements
+
+* add lucide-react icons to node palette and canvas nodes ([#654](https://github.com/breaking-brake/cc-wf-studio/issues/654)) ([cc6abcf](https://github.com/breaking-brake/cc-wf-studio/commit/cc6abcfd409774700df3664efc1e58b6d4047d92))
+* allow dragging nodes out of group nodes ([#656](https://github.com/breaking-brake/cc-wf-studio/issues/656)) ([28682b3](https://github.com/breaking-brake/cc-wf-studio/commit/28682b30b5cb1127b323a123f7c808136a39e50b))
+
 ## [3.29.0](https://github.com/breaking-brake/cc-wf-studio/compare/v3.28.1...v3.29.0) (2026-03-17)
 
 ### Features

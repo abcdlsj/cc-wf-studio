@@ -1,3 +1,9 @@
+## [3.29.0](https://github.com/breaking-brake/cc-wf-studio/compare/v3.28.1...v3.29.0) (2026-03-17)
+
+### Features
+
+* add Group Node for visual node grouping ([#652](https://github.com/breaking-brake/cc-wf-studio/issues/652)) ([5186aa4](https://github.com/breaking-brake/cc-wf-studio/commit/5186aa4ad2e159cc265b7d8641e15c4046e7682b))
+
 ## [3.28.1](https://github.com/breaking-brake/cc-wf-studio/compare/v3.28.0...v3.28.1) (2026-03-17)
 
 ### Improvements

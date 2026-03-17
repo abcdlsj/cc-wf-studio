@@ -105,6 +105,7 @@ export const zhCNWebviewTranslations: WebviewTranslationKeys = {
   'palette.basicNodes': '基本节点',
   'palette.specialNodes': '特殊节点',
   'palette.controlFlow': '控制流程',
+  'palette.layout': '布局',
   'palette.quickStart': '💡 快速入门',
 
   // Node types
@@ -125,6 +126,12 @@ export const zhCNWebviewTranslations: WebviewTranslationKeys = {
   'node.askUserQuestion.description': '根据用户选择分支',
   'node.skill.title': 'Skill',
   'node.skill.description': '执行Claude Code Skill',
+
+  // Group Node
+  'node.group.title': 'Group',
+  'node.group.description': '节点视觉分组容器',
+  'property.group.members': '成员',
+  'property.group.empty': '将节点拖入此分组以整理工作流。',
 
   // Codex Node (Feature: 518-codex-agent-node)
   'node.codex.title': 'Codex Agent',

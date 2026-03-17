@@ -107,6 +107,7 @@ export const koWebviewTranslations: WebviewTranslationKeys = {
   'palette.basicNodes': '기본 노드',
   'palette.specialNodes': '특수 노드',
   'palette.controlFlow': '제어 흐름',
+  'palette.layout': '레이아웃',
   'palette.quickStart': '💡 빠른 시작',
 
   // Node types
@@ -128,6 +129,12 @@ export const koWebviewTranslations: WebviewTranslationKeys = {
   'node.askUserQuestion.description': '사용자 선택에 따라 분기',
   'node.skill.title': 'Skill',
   'node.skill.description': 'Claude Code Skill 실행',
+
+  // Group Node
+  'node.group.title': 'Group',
+  'node.group.description': '노드 시각적 그룹화',
+  'property.group.members': '멤버',
+  'property.group.empty': '노드를 이 그룹으로 드래그하여 워크플로를 정리하세요.',
 
   // Codex Node (Feature: 518-codex-agent-node)
   'node.codex.title': 'Codex Agent',

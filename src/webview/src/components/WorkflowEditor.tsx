@@ -9,6 +9,7 @@ import { Activity, PanelLeftOpen } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import ReactFlow, {
+  applyNodeChanges,
   Background,
   type Connection,
   Controls,
@@ -18,7 +19,6 @@ import ReactFlow, {
   type Node,
   type NodeTypes,
   Panel,
-  applyNodeChanges,
 } from 'reactflow';
 import { CURRENT_ANNOUNCEMENT, cleanupDismissedAnnouncements } from '../constants/announcements';
 import { useAutoFocusNode } from '../hooks/useAutoFocusNode';
@@ -37,6 +37,7 @@ import { BranchNodeComponent } from './nodes/BranchNode';
 // 新規ノードタイプのインポート
 import { CodexNodeComponent } from './nodes/CodexNode';
 import { EndNode } from './nodes/EndNode';
+import { GroupNodeComponent } from './nodes/GroupNode';
 import { IfElseNodeComponent } from './nodes/IfElseNode';
 import { McpNodeComponent } from './nodes/McpNode/McpNode';
 import { PromptNode } from './nodes/PromptNode';
@@ -66,6 +67,7 @@ const nodeTypes: NodeTypes = {
   mcp: McpNodeComponent, // Feature: 001-mcp-node
   subAgentFlow: SubAgentFlowNodeComponent, // Feature: 089-subworkflow
   codex: CodexNodeComponent, // Feature: 518-codex-agent-node
+  group: GroupNodeComponent, // Feature: group-node
 };
 
 /**
@@ -120,6 +122,7 @@ export const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
     syncSelectedNodeId,
     selectedNodeId,
     interactionMode,
+    onNodeDragStop,
   } = useWorkflowStore();
 
   // Edge animation toggle (respects prefers-reduced-motion by default)
@@ -128,16 +131,32 @@ export const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
   );
 
   // Animate edges: selected edge itself, or edges connected to selected node
+  // For group nodes: also animate edges connected to any child node
   const animatedEdges = useMemo(() => {
     if (!isEdgeAnimationEnabled) return edges;
+
+    // If a group node is selected, collect its child node IDs
+    let targetNodeIds: Set<string> | null = null;
+    if (selectedNodeId != null) {
+      const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+      if (selectedNode?.type === 'group') {
+        targetNodeIds = new Set(
+          nodes.filter((n) => n.parentId === selectedNodeId).map((n) => n.id)
+        );
+      }
+    }
+
     return edges.map((edge) => ({
       ...edge,
       animated:
         edge.selected ||
         (selectedNodeId != null &&
-          (edge.source === selectedNodeId || edge.target === selectedNodeId)),
+          (edge.source === selectedNodeId ||
+            edge.target === selectedNodeId ||
+            (targetNodeIds != null &&
+              (targetNodeIds.has(edge.source) || targetNodeIds.has(edge.target))))),
     }));
-  }, [edges, selectedNodeId, isEdgeAnimationEnabled]);
+  }, [edges, nodes, selectedNodeId, isEdgeAnimationEnabled]);
 
   /**
    * 接続制約の検証
@@ -161,6 +180,12 @@ export const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
       // Endノードは出力接続を持てない
       if (sourceNode?.type === 'end') {
         console.warn('Cannot connect from End node: End nodes cannot have output connections');
+        return false;
+      }
+
+      // Groupノードは接続を持てない
+      if (sourceNode?.type === 'group' || targetNode?.type === 'group') {
+        console.warn('Cannot connect to/from Group node: Group nodes are layout-only');
         return false;
       }
 
@@ -201,6 +226,14 @@ export const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
       setSelectedNodeId(node.id);
     },
     [setSelectedNodeId]
+  );
+
+  // Handle node drag stop (group containment logic)
+  const handleNodeDragStop = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      onNodeDragStop(node);
+    },
+    [onNodeDragStop]
   );
 
   // Handle pane click (deselect)
@@ -271,6 +304,7 @@ export const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
           onNodesChange={handleNodesChange}
           onEdgesChange={handleEdgesChange}
           onConnect={handleConnect}
+          onNodeDragStop={handleNodeDragStop}
           onNodeClick={handleNodeClick}
           onEdgeClick={() => syncSelectedNodeId(null)}
           onPaneClick={handlePaneClick}
@@ -319,6 +353,8 @@ export const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                       return 'var(--vscode-charts-purple)';
                     case 'codex':
                       return 'var(--vscode-charts-orange)';
+                    case 'group':
+                      return 'var(--vscode-panel-border)';
                     default:
                       return 'var(--vscode-foreground)';
                   }

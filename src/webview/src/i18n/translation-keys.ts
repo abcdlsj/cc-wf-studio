@@ -104,6 +104,7 @@ export interface WebviewTranslationKeys {
   'palette.basicNodes': string;
   'palette.specialNodes': string;
   'palette.controlFlow': string;
+  'palette.layout': string;
   'palette.quickStart': string;
 
   // Node types
@@ -124,6 +125,12 @@ export interface WebviewTranslationKeys {
   'node.askUserQuestion.description': string;
   'node.skill.title': string;
   'node.skill.description': string;
+
+  // Group Node
+  'node.group.title': string;
+  'node.group.description': string;
+  'property.group.members': string;
+  'property.group.empty': string;
 
   // Codex Node (Feature: 518-codex-agent-node)
   'node.codex.title': string;

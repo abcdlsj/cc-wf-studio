@@ -43,6 +43,8 @@ export const zhTWWebviewTranslations: WebviewTranslationKeys = {
   'toolbar.interactionMode.switchToSelection': '切換到選擇模式',
   'toolbar.edgeAnimation.enable': '啟用邊動畫',
   'toolbar.edgeAnimation.disable': '停用邊動畫',
+  'toolbar.highlight.enable': '啟用群組節點高亮',
+  'toolbar.highlight.disable': '停用群組節點高亮',
 
   // Toolbar minimap toggle
   'toolbar.minimapToggle.show': '顯示迷你地圖',
@@ -908,6 +910,8 @@ export const zhTWWebviewTranslations: WebviewTranslationKeys = {
   'subAgent.dialog.description': '瀏覽並選擇現有命令檔案作為 Sub-Agent 節點使用。',
   'subAgent.dialog.userDescription': '~/.claude/agents/ 中的命令 — 所有專案可用。',
   'subAgent.dialog.projectDescription': '.claude/agents/ 中的命令 — 僅限此專案。',
+  'subAgent.dialog.localDescription':
+    '由已安裝的 Claude Code 外掛程式提供的代理。這些代理為唯讀，由各自的外掛程式管理。',
   'subAgent.property.linkedCommand': '關聯命令',
 
   // Sub-Agent Form Dialog (Create New)

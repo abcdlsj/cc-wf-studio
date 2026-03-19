@@ -141,6 +141,7 @@ export interface SaveWorkflowPayload {
 export interface ExportWorkflowPayload {
   workflow: Workflow;
   overwriteExisting?: boolean;
+  highlightEnabled?: boolean;
 }
 
 export interface ConfirmOverwritePayload {
@@ -181,6 +182,8 @@ export interface CancelRefinementPayload {
 export interface RunAsSlashCommandPayload {
   /** Workflow to run */
   workflow: Workflow;
+  /** Whether group node highlight is enabled (default: true) */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -239,10 +242,12 @@ export interface CommandReference {
   description: string;
   /** Absolute path to the .md command file */
   commandPath: string;
-  /** Scope: user (~/.claude/agents/) or project (.claude/agents/) */
-  scope: 'user' | 'project';
+  /** Scope: user (~/.claude/agents/), project (.claude/agents/), or local (plugin) */
+  scope: 'user' | 'project' | 'local';
   /** Full prompt content of the command file */
   promptContent: string;
+  /** Plugin name for plugin-provided agents (e.g., 'with-me' for 'with-me:agent-name') */
+  pluginName?: string;
 }
 
 // ============================================================================
@@ -1157,11 +1162,12 @@ export type ExtensionMessage =
   | Message<GetCurrentWorkflowRequestPayload, 'GET_CURRENT_WORKFLOW_REQUEST'>
   | Message<ApplyWorkflowFromMcpPayload, 'APPLY_WORKFLOW_FROM_MCP'>
   | Message<McpServerStatusPayload, 'MCP_SERVER_STATUS'>
+  | Message<HighlightGroupNodePayload, 'HIGHLIGHT_GROUP_NODE'>
   | Message<RunAiEditingSkillSuccessPayload, 'RUN_AI_EDITING_SKILL_SUCCESS'>
   | Message<RunAiEditingSkillFailedPayload, 'RUN_AI_EDITING_SKILL_FAILED'>
   | Message<LaunchAiAgentSuccessPayload, 'LAUNCH_AI_AGENT_SUCCESS'>
   | Message<LaunchAiAgentFailedPayload, 'LAUNCH_AI_AGENT_FAILED'>
-  | Message<void, 'ANTIGRAVITY_MCP_REFRESH_NEEDED'>
+  | Message<AntigravityMcpRefreshNeededPayload, 'ANTIGRAVITY_MCP_REFRESH_NEEDED'>
   | Message<UploadToClaudeApiSuccessPayload, 'UPLOAD_TO_CLAUDE_API_SUCCESS'>
   | Message<UploadToClaudeApiFailedPayload, 'UPLOAD_TO_CLAUDE_API_FAILED'>
   | Message<ExecuteUploadedSkillSuccessPayload, 'EXECUTE_UPLOADED_SKILL_SUCCESS'>
@@ -1586,6 +1592,8 @@ export interface ShareWorkflowFailedPayload {
 export interface ExportForCopilotPayload {
   /** Workflow to export */
   workflow: Workflow;
+  /** Whether group node highlight tracking is enabled */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1604,6 +1612,8 @@ export interface ExportForCopilotSuccessPayload {
 export interface RunForCopilotPayload {
   /** Workflow to run */
   workflow: Workflow;
+  /** Whether highlight is enabled (for MCP server auto-start) */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1637,6 +1647,8 @@ export interface CopilotOperationFailedPayload {
 export interface RunForCopilotCliPayload {
   /** Workflow to run */
   workflow: Workflow;
+  /** Whether highlight is enabled (for MCP server auto-start) */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1657,6 +1669,8 @@ export interface RunForCopilotCliSuccessPayload {
 export interface ExportForCopilotCliPayload {
   /** Workflow to export */
   workflow: Workflow;
+  /** Whether group node highlight tracking is enabled */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1682,6 +1696,8 @@ export interface ExportForCopilotCliSuccessPayload {
 export interface ExportForCodexCliPayload {
   /** Workflow to export */
   workflow: Workflow;
+  /** Whether group node highlight tracking is enabled */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1703,6 +1719,8 @@ export interface ExportForCodexCliSuccessPayload {
 export interface RunForCodexCliPayload {
   /** Workflow to run */
   workflow: Workflow;
+  /** Whether highlight is enabled (for MCP server auto-start) */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1740,6 +1758,8 @@ export interface CodexOperationFailedPayload {
 export interface ExportForRooCodePayload {
   /** Workflow to export */
   workflow: Workflow;
+  /** Whether group node highlight tracking is enabled */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1761,6 +1781,8 @@ export interface ExportForRooCodeSuccessPayload {
 export interface RunForRooCodePayload {
   /** Workflow to run */
   workflow: Workflow;
+  /** Whether highlight is enabled (for MCP server auto-start) */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1798,6 +1820,8 @@ export interface RooCodeOperationFailedPayload {
 export interface ExportForGeminiCliPayload {
   /** Workflow to export */
   workflow: Workflow;
+  /** Whether group node highlight tracking is enabled */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1818,6 +1842,8 @@ export interface ExportForGeminiCliSuccessPayload {
 export interface RunForGeminiCliPayload {
   /** Workflow to run */
   workflow: Workflow;
+  /** Whether highlight is enabled (for MCP server auto-start) */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1855,6 +1881,8 @@ export interface GeminiOperationFailedPayload {
 export interface ExportForAntigravityPayload {
   /** Workflow to export */
   workflow: Workflow;
+  /** Whether group node highlight tracking is enabled */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1875,6 +1903,8 @@ export interface ExportForAntigravitySuccessPayload {
 export interface RunForAntigravityPayload {
   /** Workflow to run */
   workflow: Workflow;
+  /** Whether highlight is enabled (for MCP server auto-start) */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1912,6 +1942,8 @@ export interface AntigravityOperationFailedPayload {
 export interface ExportForCursorPayload {
   /** Workflow to export */
   workflow: Workflow;
+  /** Whether group node highlight tracking is enabled */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -1932,6 +1964,8 @@ export interface ExportForCursorSuccessPayload {
 export interface RunForCursorPayload {
   /** Workflow to run */
   workflow: Workflow;
+  /** Whether highlight is enabled (for MCP server auto-start) */
+  highlightEnabled?: boolean;
 }
 
 /**
@@ -2032,6 +2066,28 @@ export interface LaunchAiAgentFailedPayload {
   timestamp: string; // ISO 8601
 }
 
+/**
+ * Antigravity MCP refresh needed payload (Extension → Webview)
+ *
+ * Sent when MCP config was newly written and Antigravity needs to reload MCP settings.
+ */
+export interface AntigravityMcpRefreshNeededPayload {
+  /** Context: 'run' for Run flow, 'ai-editing' for AI editing flow */
+  context: 'run' | 'ai-editing';
+  /** Skill name to launch after MCP refresh */
+  skillName: string;
+}
+
+/**
+ * Confirm Antigravity Cascade launch payload (Webview → Extension)
+ *
+ * Sent after user confirms MCP refresh in the dialog.
+ */
+export interface ConfirmAntigravityCascadeLaunchPayload {
+  /** Skill name to launch */
+  skillName: string;
+}
+
 // ============================================================================
 // MCP Server Management Payloads (Built-in MCP Server)
 // ============================================================================
@@ -2055,6 +2111,14 @@ export type McpConfigTarget =
 export interface StartMcpServerPayload {
   /** Config targets to write server URL to */
   configTargets: McpConfigTarget[];
+}
+
+/**
+ * Highlight group node payload (Extension → Webview)
+ * Sent by MCP tool to highlight the currently executing group node on canvas
+ */
+export interface HighlightGroupNodePayload {
+  groupNodeId: string | null;
 }
 
 /**
@@ -2264,7 +2328,7 @@ export type WebviewMessage =
   | Message<LaunchAiAgentPayload, 'LAUNCH_AI_AGENT'>
   | Message<SetReviewBeforeApplyPayload, 'SET_REVIEW_BEFORE_APPLY'>
   | Message<void, 'OPEN_ANTIGRAVITY_MCP_SETTINGS'>
-  | Message<void, 'CONFIRM_ANTIGRAVITY_CASCADE_LAUNCH'>
+  | Message<ConfirmAntigravityCascadeLaunchPayload, 'CONFIRM_ANTIGRAVITY_CASCADE_LAUNCH'>
   | Message<UploadToClaudeApiPayload, 'UPLOAD_TO_CLAUDE_API'>
   | Message<ExecuteUploadedSkillPayload, 'EXECUTE_UPLOADED_SKILL'>
   | Message<StoreAnthropicApiKeyPayload, 'STORE_ANTHROPIC_API_KEY'>

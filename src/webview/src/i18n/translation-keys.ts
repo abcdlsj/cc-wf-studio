@@ -41,6 +41,8 @@ export interface WebviewTranslationKeys {
   'toolbar.interactionMode.switchToSelection': string;
   'toolbar.edgeAnimation.enable': string;
   'toolbar.edgeAnimation.disable': string;
+  'toolbar.highlight.enable': string;
+  'toolbar.highlight.disable': string;
 
   // Toolbar minimap toggle
   'toolbar.minimapToggle.show': string;
@@ -865,6 +867,7 @@ export interface WebviewTranslationKeys {
   'subAgent.dialog.description': string;
   'subAgent.dialog.userDescription': string;
   'subAgent.dialog.projectDescription': string;
+  'subAgent.dialog.localDescription': string;
   'subAgent.property.linkedCommand': string;
 
   // Sub-Agent Form Dialog (Create New)

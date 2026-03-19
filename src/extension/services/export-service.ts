@@ -36,10 +36,11 @@ export async function checkExistingFiles(
   const agentsDir = path.join(workspacePath, '.claude', 'agents');
   const commandsDir = path.join(workspacePath, '.claude', 'commands');
 
-  // Check Sub-Agent files (skip linked command nodes — they already exist externally)
+  // Check Sub-Agent files (skip linked command nodes and plugin agents — they already exist externally)
   const subAgentNodes = workflow.nodes.filter((node) => node.type === 'subAgent') as SubAgentNode[];
   for (const node of subAgentNodes) {
     if (node.data.commandFilePath) continue;
+    if (node.data.pluginName) continue;
     const fileName = nodeNameToFileName(node.name);
     const filePath = path.join(agentsDir, `${fileName}.md`);
     if (await fileService.fileExists(filePath)) {
@@ -80,7 +81,8 @@ export async function checkExistingFiles(
  */
 export async function exportWorkflow(
   workflow: Workflow,
-  fileService: FileService
+  fileService: FileService,
+  options?: { highlightEnabled?: boolean }
 ): Promise<string[]> {
   const exportedFiles: string[] = [];
   const workspacePath = fileService.getWorkspacePath();
@@ -93,10 +95,11 @@ export async function exportWorkflow(
   await fileService.createDirectory(agentsDir);
   await fileService.createDirectory(commandsDir);
 
-  // Export Sub-Agent nodes (skip reference nodes — they already have external .md files)
+  // Export Sub-Agent nodes (skip reference nodes and plugin agents — they already have external .md files)
   const subAgentNodes = workflow.nodes.filter((node) => node.type === 'subAgent') as SubAgentNode[];
   for (const node of subAgentNodes) {
     if (node.data.commandFilePath) continue;
+    if (node.data.pluginName) continue; // Plugin agents exist in plugin directory
     // Legacy inline node — warn and generate file for backward compatibility
     console.warn(
       `[Export] SubAgent node "${node.name}" has no commandFilePath (inline definition). Consider migrating to reference model.`
@@ -127,7 +130,12 @@ export async function exportWorkflow(
         (node) => node.data.subAgentFlowId === subAgentFlow.id
       );
 
-      const content = generateSubAgentFlowAgentFile(subAgentFlow, fileName, referencingNode);
+      const content = generateSubAgentFlowAgentFile(
+        subAgentFlow,
+        fileName,
+        referencingNode,
+        options
+      );
       await fileService.writeFile(filePath, content);
       exportedFiles.push(filePath);
     }
@@ -136,7 +144,7 @@ export async function exportWorkflow(
   // Export SlashCommand
   const commandFileName = workflowBaseName;
   const commandFilePath = path.join(commandsDir, `${commandFileName}.md`);
-  const commandContent = generateSlashCommandFile(workflow);
+  const commandContent = generateSlashCommandFile(workflow, options);
   await fileService.writeFile(commandFilePath, commandContent);
   exportedFiles.push(commandFilePath);
 
@@ -268,7 +276,8 @@ export function generateSubAgentFile(node: SubAgentNode): string {
 export function generateSubAgentFlowAgentFile(
   subAgentFlow: SubAgentFlow,
   agentFileName: string,
-  referencingNode?: SubAgentFlowNode
+  referencingNode?: SubAgentFlowNode,
+  options?: { highlightEnabled?: boolean }
 ): string {
   const agentName = agentFileName;
 
@@ -320,6 +329,7 @@ export function generateSubAgentFlowAgentFile(
   // Generate execution logic using shared module
   const executionLogic = generateExecutionInstructions(pseudoWorkflow, {
     provider: 'claude-code',
+    highlightEnabled: options?.highlightEnabled,
   });
 
   return `${frontmatter.join('\n')}${mermaidFlowchart}\n\n${executionLogic}`;
@@ -359,7 +369,10 @@ export function escapeYamlString(value: string, alwaysQuote = false): string {
  * @param workflow - Workflow definition
  * @returns Markdown content with YAML frontmatter
  */
-function generateSlashCommandFile(workflow: Workflow): string {
+function generateSlashCommandFile(
+  workflow: Workflow,
+  options?: { highlightEnabled?: boolean }
+): string {
   // YAML frontmatter
   const frontmatterLines = [
     '---',
@@ -432,6 +445,7 @@ function generateSlashCommandFile(workflow: Workflow): string {
     parentWorkflowName: workflowBaseName,
     subAgentFlows: workflow.subAgentFlows,
     provider: 'claude-code',
+    highlightEnabled: options?.highlightEnabled,
   });
 
   return `${frontmatter}${mermaidFlowchart}\n\n${executionLogic}`;

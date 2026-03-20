@@ -1,3 +1,9 @@
+## [3.30.1](https://github.com/breaking-brake/cc-wf-studio/compare/v3.30.0...v3.30.1) (2026-03-20)
+
+### Bug Fixes
+
+* preserve hyphens in Mermaid node IDs and unify End node prefix ([#666](https://github.com/breaking-brake/cc-wf-studio/issues/666)) ([1e1f890](https://github.com/breaking-brake/cc-wf-studio/commit/1e1f890a7b22ebb9175ca9f01fc28d641240e08d))
+
 ## [3.30.0](https://github.com/breaking-brake/cc-wf-studio/compare/v3.29.2...v3.30.0) (2026-03-19)
 
 ### Features

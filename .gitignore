@@ -24,10 +24,10 @@ npm-debug.log*
 .env
 .env.local
 
-# Claude Code settings (contains private configuration)
-.claude/
+# Claude Code (track skills only)
+.claude/*
+!.claude/skills/
 .vscode/workflows/
-.mcp.json
 
 # POC files
 poc/

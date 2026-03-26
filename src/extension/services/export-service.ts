@@ -272,10 +272,10 @@ export function generateSubAgentFile(node: SubAgentNode, options?: SubAgentFileO
   frontmatter.push('---');
   frontmatter.push('');
 
-  // Prompt body
-  const prompt = data.prompt || '';
+  // Agent definition body (what this agent IS), fallback to prompt for legacy workflows
+  const agentDefinition = data.agentDefinition || data.prompt || '';
 
-  return frontmatter.join('\n') + prompt;
+  return frontmatter.join('\n') + agentDefinition;
 }
 
 /**

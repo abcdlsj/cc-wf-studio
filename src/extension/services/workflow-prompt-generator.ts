@@ -674,11 +674,17 @@ export function generateExecutionInstructions(
         : node.name || 'Sub-Agent';
       sections.push(`#### ${nodeId}(Sub-Agent: ${agentName})`);
       sections.push('');
+      if (node.data.builtInType && provider === 'claude-code') {
+        sections.push(`**subagent_type**: ${node.data.builtInType}`);
+        sections.push('');
+      }
       if (node.data.description) {
         sections.push(`**Description**: ${node.data.description}`);
         sections.push('');
       }
-      if (node.data.model && node.data.model !== 'inherit') {
+      const shouldOmitModelForBuiltIn =
+        provider !== 'claude-code' && node.data.builtInType && node.data.model === 'haiku';
+      if (node.data.model && node.data.model !== 'inherit' && !shouldOmitModelForBuiltIn) {
         sections.push(`**Model**: ${node.data.model}`);
         sections.push('');
       }

@@ -7,6 +7,7 @@
  * Updated: Added "Edit in Editor" button for textarea fields
  */
 
+import { BUILT_IN_SUB_AGENTS } from '@shared/constants/built-in-sub-agents';
 import type { McpNodeData } from '@shared/types/mcp-node';
 import {
   type AskUserQuestionData,
@@ -378,6 +379,7 @@ const SubAgentProperties: React.FC<{
   const data = node.data;
   const agentType = data.agentType || 'claudeCode';
   const isClaudeCode = agentType === 'claudeCode';
+  const isBuiltIn = !!data.builtInType;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const labelStyle: React.CSSProperties = {
@@ -395,8 +397,44 @@ const SubAgentProperties: React.FC<{
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Linked Command Badge (show at top when linked) */}
-      {data.commandFilePath && (
+      {/* Built-in badge */}
+      {isBuiltIn &&
+        (() => {
+          const builtInPreset = BUILT_IN_SUB_AGENTS.find((p) => p.type === data.builtInType);
+          return (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 10px',
+                backgroundColor: 'var(--vscode-textBlockQuote-background)',
+                borderLeft: '3px solid var(--vscode-terminal-ansiGreen)',
+                borderRadius: '0 4px 4px 0',
+                fontSize: '12px',
+              }}
+            >
+              <span
+                style={{
+                  padding: '1px 6px',
+                  backgroundColor: 'var(--vscode-terminal-ansiGreen)',
+                  color: '#ffffff',
+                  borderRadius: '3px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                }}
+              >
+                {t('subAgent.builtIn.badge')}
+              </span>
+              <span style={{ fontWeight: 600 }}>
+                {builtInPreset ? t(builtInPreset.nameKey) : data.builtInType}
+              </span>
+            </div>
+          );
+        })()}
+
+      {/* Linked Command Badge (show at top when linked, hidden for built-in) */}
+      {!isBuiltIn && data.commandFilePath && (
         <div>
           <div style={labelStyle}>{t('subAgent.property.linkedCommand')}</div>
           <div
@@ -466,9 +504,26 @@ const SubAgentProperties: React.FC<{
         <div style={valueStyle}>{data.description || '-'}</div>
       </div>
 
+      {/* Agent Definition (read-only, max 3 lines) */}
+      <div>
+        <div style={labelStyle}>{t('subAgent.form.agentDefinitionLabel')}</div>
+        <div
+          style={{
+            ...valueStyle,
+            fontFamily: 'var(--vscode-editor-font-family)',
+            whiteSpace: 'pre-wrap',
+            maxHeight: '4.5em',
+            lineHeight: '1.5',
+            overflow: 'hidden',
+          }}
+        >
+          {data.agentDefinition || '-'}
+        </div>
+      </div>
+
       {/* Prompt (read-only, max 3 lines) */}
       <div>
-        <div style={labelStyle}>{t('property.prompt')}</div>
+        <div style={labelStyle}>{t('subAgent.form.promptLabel')}</div>
         <div
           style={{
             ...valueStyle,
@@ -490,43 +545,54 @@ const SubAgentProperties: React.FC<{
           <div>
             <div style={labelStyle}>{t('property.model')}</div>
             <div style={valueStyle}>
-              {(data.model || 'sonnet').charAt(0).toUpperCase() + (data.model || 'sonnet').slice(1)}
+              {isBuiltIn
+                ? `${BUILT_IN_SUB_AGENTS.find((p) => p.type === data.builtInType)?.modelDescription || '-'} (${t('subAgent.builtIn.controlledByPreset')})`
+                : (data.model || 'sonnet').charAt(0).toUpperCase() +
+                  (data.model || 'sonnet').slice(1)}
             </div>
           </div>
 
           {/* Tools */}
           <div>
             <div style={labelStyle}>{t('property.tools')}</div>
-            <div style={valueStyle}>{data.tools || '-'}</div>
-          </div>
-
-          {/* Memory */}
-          <div>
-            <div style={labelStyle}>{t('property.memory')}</div>
-            <div style={valueStyle}>{data.memory || '-'}</div>
-          </div>
-
-          {/* Color */}
-          <div>
-            <div style={labelStyle}>{t('properties.subAgent.color')}</div>
-            <div style={{ ...valueStyle, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {data.color ? (
-                <>
-                  <div
-                    style={{
-                      width: '14px',
-                      height: '14px',
-                      backgroundColor: SUB_AGENT_COLORS[data.color],
-                      borderRadius: '2px',
-                    }}
-                  />
-                  <span style={{ textTransform: 'capitalize' }}>{data.color}</span>
-                </>
-              ) : (
-                '-'
-              )}
+            <div style={valueStyle}>
+              {isBuiltIn
+                ? `${BUILT_IN_SUB_AGENTS.find((p) => p.type === data.builtInType)?.toolsDescription || '-'} (${t('subAgent.builtIn.controlledByPreset')})`
+                : data.tools || '-'}
             </div>
           </div>
+
+          {/* Memory (hidden for built-in) */}
+          {!isBuiltIn && (
+            <div>
+              <div style={labelStyle}>{t('property.memory')}</div>
+              <div style={valueStyle}>{data.memory || '-'}</div>
+            </div>
+          )}
+
+          {/* Color (hidden for built-in) */}
+          {!isBuiltIn && (
+            <div>
+              <div style={labelStyle}>{t('properties.subAgent.color')}</div>
+              <div style={{ ...valueStyle, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {data.color ? (
+                  <>
+                    <div
+                      style={{
+                        width: '14px',
+                        height: '14px',
+                        backgroundColor: SUB_AGENT_COLORS[data.color],
+                        borderRadius: '2px',
+                      }}
+                    />
+                    <span style={{ textTransform: 'capitalize' }}>{data.color}</span>
+                  </>
+                ) : (
+                  '-'
+                )}
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -536,16 +602,19 @@ const SubAgentProperties: React.FC<{
         onClose={() => setIsEditDialogOpen(false)}
         initialData={{
           description: data.description,
+          agentDefinition: data.agentDefinition,
           prompt: data.prompt,
           agentType: agentType,
-          model: data.model || 'sonnet',
+          model: data.model || (data.builtInType ? 'inherit' : 'sonnet'),
           tools: data.tools || '',
           memory: data.memory || '',
           color: data.color,
+          builtInType: data.builtInType,
         }}
         onSubmit={async (formData) => {
           updateNodeData(node.id, {
             description: formData.description,
+            agentDefinition: formData.agentDefinition,
             prompt: formData.prompt,
             agentType: formData.agentType,
             model: formData.agentType === 'claudeCode' ? formData.model : undefined,

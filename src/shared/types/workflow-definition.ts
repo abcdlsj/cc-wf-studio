@@ -107,8 +107,14 @@ export interface WorkflowHooks {
 // Node Data Types
 // ============================================================================
 
+/** Built-in Claude Code sub-agent types */
+export type BuiltInSubAgentType = 'general-purpose' | 'explore' | 'plan';
+
 export interface SubAgentData {
   description: string;
+  /** Agent definition: describes what this agent IS, its capabilities and role. Exported as .md file body. */
+  agentDefinition: string;
+  /** Task prompt: describes what to TELL this agent to do. Exported in execution instructions. */
   prompt: string;
   /** Agent type: 'claudeCode' shows Claude Code-specific fields, 'other' hides them */
   agentType?: 'claudeCode' | 'other';
@@ -124,6 +130,8 @@ export interface SubAgentData {
   commandScope?: 'user' | 'project';
   /** Plugin name for plugin-provided agents (e.g., 'with-me' for 'with-me:agent-name') */
   pluginName?: string;
+  /** Built-in Claude Code sub-agent type. When set, model and tools are controlled by Claude Code. */
+  builtInType?: BuiltInSubAgentType;
 }
 
 // Color codes for SubAgent color property
@@ -613,6 +621,8 @@ export const VALIDATION_RULES = {
   SUB_AGENT: {
     DESCRIPTION_MIN_LENGTH: 1,
     DESCRIPTION_MAX_LENGTH: 200,
+    AGENT_DEFINITION_MIN_LENGTH: 1,
+    AGENT_DEFINITION_MAX_LENGTH: 10000,
     PROMPT_MIN_LENGTH: 1,
     PROMPT_MAX_LENGTH: 10000,
     OUTPUT_PORTS: 1,

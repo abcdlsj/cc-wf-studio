@@ -5,8 +5,9 @@
  * Based on: /specs/001-cc-wf-studio/plan.md
  */
 
+import { BUILT_IN_SUB_AGENTS } from '@shared/constants/built-in-sub-agents';
 import type { CommandReference } from '@shared/types/messages';
-import type { SubAgentFlow } from '@shared/types/workflow-definition';
+import type { BuiltInSubAgentType, SubAgentFlow } from '@shared/types/workflow-definition';
 import { NodeType } from '@shared/types/workflow-definition';
 import {
   Bot,
@@ -28,40 +29,13 @@ import { useTranslation } from '../i18n/i18n-context';
 import { createSubAgent } from '../services/command-browser-service';
 import { useRefinementStore } from '../stores/refinement-store';
 import { useWorkflowStore } from '../stores/workflow-store';
+import { parseAgentFrontmatter } from '../utils/agent-frontmatter';
 import { BetaBadge } from './common/BetaBadge';
 import { CodexNodeDialog } from './dialogs/CodexNodeDialog';
 import { McpNodeDialog } from './dialogs/McpNodeDialog';
 import { SkillBrowserDialog } from './dialogs/SkillBrowserDialog';
 import { SubAgentCreationDialog } from './dialogs/SubAgentCreationDialog';
 import type { SubAgentFormData } from './dialogs/SubAgentFormDialog';
-
-/**
- * Parse YAML frontmatter from agent .md file content.
- * Returns extracted fields and the body text (after frontmatter).
- */
-function parseAgentFrontmatter(content: string): {
-  frontmatter: Record<string, string | undefined>;
-  body: string;
-} {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-  if (!match) {
-    return { frontmatter: {}, body: content };
-  }
-
-  const yamlBlock = match[1];
-  const body = (match[2] || '').trim();
-  const frontmatter: Record<string, string | undefined> = {};
-
-  // Parse simple key: value lines (skip complex nested structures like hooks/mcpServers)
-  for (const line of yamlBlock.split('\n')) {
-    const kvMatch = line.match(/^(\w[\w-]*)\s*:\s*(.*)$/);
-    if (kvMatch) {
-      frontmatter[kvMatch[1]] = kvMatch[2].trim();
-    }
-  }
-
-  return { frontmatter, body };
-}
 
 /**
  * NodePalette Component Props
@@ -159,6 +133,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onCollapse }) => {
     // Write .claude/agents/{name}.md immediately
     const result = await createSubAgent({
       description: formData.description,
+      agentDefinition: formData.agentDefinition,
       prompt: formData.prompt,
       agentType: formData.agentType,
       model: formData.agentType === 'claudeCode' ? formData.model : undefined,
@@ -176,6 +151,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onCollapse }) => {
       position,
       data: {
         description: formData.description,
+        agentDefinition: formData.agentDefinition,
         prompt: formData.prompt,
         agentType: formData.agentType,
         model: formData.agentType === 'claudeCode' ? formData.model : undefined,
@@ -193,19 +169,43 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onCollapse }) => {
     addNode(newNode);
   };
 
-  const handleSelectCommand = (command: CommandReference) => {
+  const handleSelectBuiltInPreset = (type: BuiltInSubAgentType, formData: SubAgentFormData) => {
+    const preset = BUILT_IN_SUB_AGENTS.find((p) => p.type === type);
+    if (!preset) return;
+
+    const position = calculateNonOverlappingPosition(250, 100);
+    const newNode = {
+      id: `agent-${Date.now()}`,
+      type: 'subAgent' as const,
+      name: t(preset.nameKey),
+      position,
+      data: {
+        description: formData.description,
+        agentDefinition: formData.agentDefinition,
+        prompt: formData.prompt,
+        agentType: 'claudeCode' as const,
+        builtInType: type,
+        model: preset.model,
+        outputPorts: 1,
+      },
+    };
+    addNode(newNode);
+  };
+
+  const handleSelectCommand = (command: CommandReference, formData: SubAgentFormData) => {
     const position = calculateNonOverlappingPosition(250, 100);
 
     // Parse YAML frontmatter from command content
-    const { frontmatter, body } = parseAgentFrontmatter(command.promptContent);
+    const { frontmatter } = parseAgentFrontmatter(command.promptContent);
 
     const newNode = {
       id: `agent-${Date.now()}`,
       type: 'subAgent' as const,
       position,
       data: {
-        description: frontmatter.description || command.name,
-        prompt: body,
+        description: formData.description,
+        agentDefinition: formData.agentDefinition,
+        prompt: formData.prompt,
         model: (frontmatter.model as 'sonnet' | 'opus' | 'haiku' | 'inherit') || 'sonnet',
         tools: frontmatter.tools,
         memory: frontmatter.memory as 'user' | 'project' | 'local' | undefined,
@@ -1096,6 +1096,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onCollapse }) => {
         onClose={() => setIsSubAgentDialogOpen(false)}
         onCreateWithForm={handleCreateNewSubAgent}
         onSelectCommand={handleSelectCommand}
+        onSelectBuiltInPreset={handleSelectBuiltInPreset}
       />
     </div>
   );

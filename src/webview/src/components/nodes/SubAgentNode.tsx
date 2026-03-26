@@ -5,11 +5,13 @@
  * Based on: /specs/001-cc-wf-studio/research.md section 3.2
  */
 
+import { BUILT_IN_SUB_AGENTS } from '@shared/constants/built-in-sub-agents';
 import type { SubAgentData } from '@shared/types/workflow-definition';
 import { SUB_AGENT_COLORS } from '@shared/types/workflow-definition';
 import { Bot } from 'lucide-react';
 import React from 'react';
 import { Handle, type NodeProps, Position } from 'reactflow';
+import { useTranslation } from '../../i18n/i18n-context';
 import { AIProviderBadge } from '../common/AIProviderBadge';
 import { DeleteButton } from './DeleteButton';
 
@@ -18,6 +20,10 @@ import { DeleteButton } from './DeleteButton';
  */
 export const SubAgentNodeComponent: React.FC<NodeProps<SubAgentData>> = React.memo(
   ({ id, data, selected }) => {
+    const { t } = useTranslation();
+    const builtInPreset = data.builtInType
+      ? BUILT_IN_SUB_AGENTS.find((p) => p.type === data.builtInType)
+      : undefined;
     return (
       <div
         className={`sub-agent-node ${selected ? 'selected' : ''}`}
@@ -51,7 +57,7 @@ export const SubAgentNodeComponent: React.FC<NodeProps<SubAgentData>> = React.me
           Sub-Agent
         </div>
 
-        {/* Node Description */}
+        {/* Agent Name */}
         <div
           style={{
             fontSize: '13px',
@@ -60,12 +66,14 @@ export const SubAgentNodeComponent: React.FC<NodeProps<SubAgentData>> = React.me
             fontWeight: 500,
           }}
         >
-          {data.pluginName
-            ? `${data.pluginName}:${data.description || 'Untitled Sub-Agent'}`
-            : data.description || 'Untitled Sub-Agent'}
+          {builtInPreset
+            ? t(builtInPreset.nameKey)
+            : data.pluginName
+              ? `${data.pluginName}:${data.description || 'Untitled Sub-Agent'}`
+              : data.description || 'Untitled Sub-Agent'}
         </div>
 
-        {/* Prompt Preview */}
+        {/* Prompt Preview (task instructions) */}
         {data.prompt && (
           <div
             style={{
@@ -86,11 +94,28 @@ export const SubAgentNodeComponent: React.FC<NodeProps<SubAgentData>> = React.me
 
         {/* Badges */}
         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+          {/* Built-in Badge */}
+          {data.builtInType && (
+            <div
+              style={{
+                fontSize: '10px',
+                color: '#ffffff',
+                backgroundColor: 'var(--vscode-terminal-ansiGreen)',
+                padding: '2px 6px',
+                borderRadius: '3px',
+                display: 'inline-block',
+                fontWeight: 600,
+              }}
+            >
+              {t('subAgent.builtIn.badge')}
+            </div>
+          )}
+
           {/* Plugin Badge */}
           {data.pluginName && <AIProviderBadge provider="claude" size="small" />}
 
-          {/* Model Badge */}
-          {data.model && (
+          {/* Model Badge (hidden for built-in) */}
+          {!data.builtInType && data.model && (
             <div
               style={{
                 fontSize: '10px',

@@ -38,12 +38,16 @@ nodeTypes:
     inputPorts: 1
     outputPorts: 1
   subAgent:
-    description: AI sub-agent executing a task with given prompt
+    description: AI sub-agent with separate agent definition and task prompt
     fields:
       description:
         type: string
         required: true
         maxLength: 200
+      agentDefinition:
+        type: string
+        required: true
+        maxLength: 10000
       prompt:
         type: string
         required: true
@@ -60,27 +64,29 @@ nodeTypes:
         type: string
         required: false
         enum[8]: red,blue,green,yellow,purple,orange,pink,cyan
-        description: Visual indicator color for this sub-agent (optional)
       memory:
         type: string
         required: false
         enum[3]: user,project,local
-        description: "Persistent memory scope. 'user'=cross-project, 'project'=VCS-trackable, 'local'=local-only"
       agentType:
         type: string
         required: false
         enum[2]: claudeCode,other
         default: claudeCode
-        description: "Agent runtime type. Set 'claudeCode' if the agent runs on Claude Code, 'other' for different AI agents (Cursor, Copilot, etc.). This controls which fields are shown in the property panel."
       commandFilePath:
         type: string
-        required: true
-        description: "Absolute path to .claude/agents/*.md file. Use list_available_agents to discover existing commands, or create a new .md file first."
+        required: false
+        description: Path to .claude/agents/*.md file. Only for user-specified custom agents.
       commandScope:
         type: string
-        required: true
+        required: false
         enum[2]: user,project
-        description: "'user' = ~/.claude/agents/, 'project' = .claude/agents/"
+        description: 'user' or 'project'. Required with commandFilePath.
+      builtInType:
+        type: string
+        required: false
+        enum[3]: general-purpose,explore,plan
+        description: Built-in type. Model and tools are auto-controlled.
       outputPorts:
         type: number
         required: true
@@ -88,19 +94,23 @@ nodeTypes:
     inputPorts: 1
     outputPorts: 1
     aiGenerationGuidance:
-      workflow: SubAgent nodes MUST reference external .claude/agents/*.md files. Never embed prompt content inline.
-      agentType: "Set 'claudeCode' if you are Claude Code, 'other' if you are a different AI agent (Cursor, Copilot, etc.). You know what you are."
-      steps[4]: Call list_available_agents to discover existing agent files,"If a matching agent exists, use its commandPath and scope","If no match, provide description/prompt/model etc. without commandFilePath — apply_workflow will auto-create the .md file",Set agentType based on your own runtime identity
-      frontmatterFormat: "---\ndescription: Short description\nmodel: sonnet\ntools: Bash, Read, Write\nmemory: project\n---\nPrompt content here..."
-      example:
-        type: subAgent
-        data:
-          description: Code reviewer
-          prompt: Review the code for bugs
-          model: sonnet
-          commandFilePath: /path/to/.claude/agents/code-reviewer.md
-          commandScope: project
-          outputPorts: 1
+      agentType: "Set 'claudeCode' for Claude Code, 'other' for other AI agents."
+      builtInAgents:
+        explore[4]: Investigate repo structure,Search files/patterns/keywords,Answer codebase questions,Analyze tech stack
+        plan[3]: Design implementation plans,Evaluate architecture trade-offs,Plan refactoring
+        "general-purpose"[4]: Code modifications,File creation/editing,Shell execution,Multi-step tasks
+        rule: "Do NOT set commandFilePath, commandScope, model, or tools for built-in agents."
+      steps[4]: "Select a built-in agent (explore for investigation/analysis, plan for design/planning, general-purpose for modifications)","Set builtInType, description, agentDefinition, and prompt",Only use custom agent (commandFilePath) when user explicitly specifies one,Set agentType based on your own runtime identity
+      examples[1]:
+        - description: Built-in explore agent
+          type: subAgent
+          data:
+            description: Explore the codebase for authentication patterns
+            agentDefinition: Fast agent specialized for exploring codebases.
+            prompt: Search the codebase and identify all authentication-related files.
+            builtInType: explore
+            agentType: claudeCode
+            outputPorts: 1
   askUserQuestion:
     description: Present a question with multiple-choice options
     fields:
@@ -761,6 +771,7 @@ examples[3]:
             y: 300
           data:
             description: Analyze data
+            agentDefinition: General-purpose data analysis agent.
             prompt: Analyze data and generate insights.
             model: sonnet
             outputPorts: 1
@@ -800,6 +811,7 @@ examples[3]:
             y: 300
           data:
             description: Scan code
+            agentDefinition: Code scanning agent for bug detection.
             prompt: Scan for bugs and issues.
             outputPorts: 1
         - id: ask-1
@@ -822,6 +834,7 @@ examples[3]:
             y: 125
           data:
             description: Critical fixes
+            agentDefinition: Agent for generating critical bug fixes.
             prompt: Generate critical fixes.
             outputPorts: 1
         - id: fix-2
@@ -832,6 +845,7 @@ examples[3]:
             y: 475
           data:
             description: All fixes
+            agentDefinition: Agent for generating all severity fixes.
             prompt: Generate all fixes.
             outputPorts: 1
         - id: end_1
@@ -874,6 +888,7 @@ examples[3]:
             y: 350
           data:
             description: Validate doc
+            agentDefinition: Document format validation agent.
             prompt: Validate document format.
             outputPorts: 1
         - id: if-1
@@ -895,6 +910,7 @@ examples[3]:
             y: 175
           data:
             description: Analyze content
+            agentDefinition: Content analysis agent.
             prompt: Analyze content.
             outputPorts: 1
         - id: error-1
@@ -905,6 +921,7 @@ examples[3]:
             y: 525
           data:
             description: Error report
+            agentDefinition: Error reporting agent.
             prompt: Generate error report.
             outputPorts: 1
         - id: ask-1
@@ -928,6 +945,7 @@ examples[3]:
             y: -175
           data:
             description: PDF format
+            agentDefinition: PDF formatting agent.
             prompt: Format as PDF.
             outputPorts: 1
         - id: fmt-md
@@ -938,6 +956,7 @@ examples[3]:
             y: 175
           data:
             description: MD format
+            agentDefinition: Markdown formatting agent.
             prompt: Format as Markdown.
             outputPorts: 1
         - id: fmt-html
@@ -948,6 +967,7 @@ examples[3]:
             y: 525
           data:
             description: HTML format
+            agentDefinition: HTML formatting agent.
             prompt: Format as HTML.
             outputPorts: 1
         - id: end_ok

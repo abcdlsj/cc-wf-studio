@@ -43,6 +43,10 @@ export interface WebviewTranslationKeys {
   'toolbar.edgeAnimation.disable': string;
   'toolbar.highlight.enable': string;
   'toolbar.highlight.disable': string;
+  'toolbar.highlight.confirmDisable.title': string;
+  'toolbar.highlight.confirmDisable.message': string;
+  'toolbar.highlight.confirmDisable.confirm': string;
+  'toolbar.highlight.confirmDisable.cancel': string;
   'toolbar.scrollMode.switchToClassic': string;
   'toolbar.scrollMode.switchToFreehand': string;
 
@@ -886,6 +890,8 @@ export interface WebviewTranslationKeys {
   'subAgent.form.agentType.other': string;
   'subAgent.form.descriptionLabel': string;
   'subAgent.form.descriptionPlaceholder': string;
+  'subAgent.form.agentDefinitionLabel': string;
+  'subAgent.form.agentDefinitionPlaceholder': string;
   'subAgent.form.promptLabel': string;
   'subAgent.form.promptPlaceholder': string;
   'subAgent.form.modelLabel': string;
@@ -899,7 +905,26 @@ export interface WebviewTranslationKeys {
   'subAgent.form.saveButton': string;
   'subAgent.property.editButton': string;
   'subAgent.form.error.descriptionRequired': string;
+  'subAgent.form.error.agentDefinitionRequired': string;
   'subAgent.form.error.promptRequired': string;
+
+  // Sub-Agent Built-in Presets
+  'subAgent.dialog.builtInTab': string;
+  'subAgent.dialog.builtInDescription': string;
+  'subAgent.builtIn.badge': string;
+  'subAgent.builtIn.controlledByPreset': string;
+  'subAgent.builtIn.generalPurpose.name': string;
+  'subAgent.builtIn.generalPurpose.description': string;
+  'subAgent.builtIn.generalPurpose.defaultAgentDefinition': string;
+  'subAgent.builtIn.generalPurpose.defaultPrompt': string;
+  'subAgent.builtIn.explore.name': string;
+  'subAgent.builtIn.explore.description': string;
+  'subAgent.builtIn.explore.defaultAgentDefinition': string;
+  'subAgent.builtIn.explore.defaultPrompt': string;
+  'subAgent.builtIn.plan.name': string;
+  'subAgent.builtIn.plan.description': string;
+  'subAgent.builtIn.plan.defaultAgentDefinition': string;
+  'subAgent.builtIn.plan.defaultPrompt': string;
 
   // Claude API Upload Dialog
   'claudeApi.description': string;

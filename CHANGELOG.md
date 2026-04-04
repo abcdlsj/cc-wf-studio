@@ -1,3 +1,10 @@
+## [3.32.2](https://github.com/breaking-brake/cc-wf-studio/compare/v3.32.1...v3.32.2) (2026-04-04)
+
+### Improvements
+
+* add parallel execution instructions for built-in sub-agents ([#709](https://github.com/breaking-brake/cc-wf-studio/issues/709)) ([c659e6d](https://github.com/breaking-brake/cc-wf-studio/commit/c659e6d1d3076bc5654e4bbe0f4d7c886821d838))
+* preserve undo history after MCP tool execution ([#708](https://github.com/breaking-brake/cc-wf-studio/issues/708)) ([eaf8f2a](https://github.com/breaking-brake/cc-wf-studio/commit/eaf8f2a850632158b9e38132c6ba4901b154a07e)), closes [#707](https://github.com/breaking-brake/cc-wf-studio/issues/707)
+
 ## [3.32.1](https://github.com/breaking-brake/cc-wf-studio/compare/v3.32.0...v3.32.1) (2026-04-03)
 
 ### Bug Fixes

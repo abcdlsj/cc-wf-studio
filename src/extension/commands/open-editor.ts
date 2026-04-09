@@ -69,6 +69,7 @@ import {
 import { handleExportForCursor, handleRunForCursor } from './cursor-handlers';
 import { handleExportWorkflow, handleExportWorkflowForExecution } from './export-workflow';
 import { handleExportForGeminiCli, handleRunForGeminiCli } from './gemini-handlers';
+import { listSampleWorkflows, loadSampleWorkflow } from './load-sample-workflow';
 import { loadWorkflow } from './load-workflow';
 import { loadWorkflowList } from './load-workflow-list';
 import {
@@ -933,6 +934,30 @@ export function registerOpenEditorCommand(
                   payload: {
                     code: 'VALIDATION_ERROR',
                     message: 'Workflow ID is required',
+                  },
+                });
+              }
+              break;
+
+            case 'LIST_SAMPLE_WORKFLOWS':
+              await listSampleWorkflows(context.extensionPath, webview, message.requestId);
+              break;
+
+            case 'LOAD_SAMPLE_WORKFLOW':
+              if (message.payload?.sampleId) {
+                await loadSampleWorkflow(
+                  context.extensionPath,
+                  webview,
+                  message.payload.sampleId,
+                  message.requestId
+                );
+              } else {
+                webview.postMessage({
+                  type: 'ERROR',
+                  requestId: message.requestId,
+                  payload: {
+                    code: 'VALIDATION_ERROR',
+                    message: 'Sample workflow ID is required',
                   },
                 });
               }

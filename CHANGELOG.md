@@ -1,3 +1,25 @@
+## [3.33.0](https://github.com/breaking-brake/cc-wf-studio/compare/v3.32.2...v3.33.0) (2026-04-12)
+
+### Features
+
+* add sample workflow feature with tour integration ([#719](https://github.com/breaking-brake/cc-wf-studio/issues/719)) ([aaf2ab1](https://github.com/breaking-brake/cc-wf-studio/commit/aaf2ab1165bdd5cec5500951ab17465abcb115ee))
+* enhance StartMenu with version display and recent workflows ([#731](https://github.com/breaking-brake/cc-wf-studio/issues/731)) ([0b4138a](https://github.com/breaking-brake/cc-wf-studio/commit/0b4138a896edca44a7c7b1259a87d8ac98f3b782))
+* redesign onboarding tour and add empty state ([#723](https://github.com/breaking-brake/cc-wf-studio/issues/723)) ([8f72a24](https://github.com/breaking-brake/cc-wf-studio/commit/8f72a24846241dbcfd575f1a362a4dc61a8a93ff))
+
+### Bug Fixes
+
+* update broken Frontmatter Reference links in all languages ([#725](https://github.com/breaking-brake/cc-wf-studio/issues/725)) ([642b9ab](https://github.com/breaking-brake/cc-wf-studio/commit/642b9abee6b75cb3eed6584a2d17a07012322fa3))
+
+### Improvements
+
+* allow edge selection inside group nodes and animate on select ([#724](https://github.com/breaking-brake/cc-wf-studio/issues/724)) ([a813d49](https://github.com/breaking-brake/cc-wf-studio/commit/a813d49b71c9ed967f0b2c4991ebcd76af4d38b8))
+* refine github-issue-planning sample workflow ([#733](https://github.com/breaking-brake/cc-wf-studio/issues/733)) ([7c1473b](https://github.com/breaking-brake/cc-wf-studio/commit/7c1473bb70a9ab33b3a5888849f2f71b6ffffd0a)), closes [#732](https://github.com/breaking-brake/cc-wf-studio/issues/732)
+* use fixed MCP server port with user-configurable setting ([#722](https://github.com/breaking-brake/cc-wf-studio/issues/722)) ([d436d2e](https://github.com/breaking-brake/cc-wf-studio/commit/d436d2ebd5eaee6e4479f3a0f926a288b9ad0f84))
+
+### Documentation
+
+* update README hero section with catchphrase and deck link ([#721](https://github.com/breaking-brake/cc-wf-studio/issues/721)) ([ba6aa52](https://github.com/breaking-brake/cc-wf-studio/commit/ba6aa52661591e300deb7fd2596f066afd5e45af))
+
 ## [3.32.2](https://github.com/breaking-brake/cc-wf-studio/compare/v3.32.1...v3.32.2) (2026-04-04)
 
 ### Improvements

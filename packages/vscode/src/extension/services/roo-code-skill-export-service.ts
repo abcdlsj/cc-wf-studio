@@ -1,133 +1,37 @@
 /**
- * Claude Code Workflow Studio - Roo Code Skill Export Service
- *
- * Handles workflow export to Roo Code Skills format (.roo/skills/name/SKILL.md)
- * Skills format enables Roo Code to execute workflows using :skill command.
+ * Roo Code Skill Export — facade over the core planner.
+ * See `agent-skill-export-helper.ts` for the I/O implementation.
  */
 
-import * as path from 'node:path';
 import type { Workflow } from '@cc-wf-studio/core';
-import { generateExecutionInstructions, generateMermaidFlowchart } from '@cc-wf-studio/core';
-import { nodeNameToFileName } from './export-service';
+import { generateAgentSkillContent } from '@cc-wf-studio/core';
+import {
+  type AgentSkillIoResult,
+  checkExistingAgentSkill,
+  exportWorkflowAsAgentSkill,
+} from './agent-skill-export-helper';
 import type { FileService } from './file-service';
 
-/**
- * Roo Code skill export result
- */
-export interface RooCodeSkillExportResult {
-  success: boolean;
-  skillPath: string;
-  skillName: string;
-  errors?: string[];
-}
+export type RooCodeSkillExportResult = AgentSkillIoResult;
 
-/**
- * Generate SKILL.md content from workflow for Roo Code
- *
- * @param workflow - Workflow to convert
- * @returns SKILL.md content as string
- */
 export function generateRooCodeSkillContent(
   workflow: Workflow,
   options?: { highlightEnabled?: boolean }
 ): string {
-  const skillName = nodeNameToFileName(workflow.name);
-
-  const description =
-    workflow.metadata?.description ||
-    `Execute the "${workflow.name}" workflow. This skill guides through a structured workflow with defined steps and decision points.`;
-
-  // Generate YAML frontmatter (Agent Skills specification)
-  const frontmatter = `---
-name: ${skillName}
-description: ${description}
----`;
-
-  // Generate Mermaid flowchart
-  const mermaidContent = generateMermaidFlowchart({
-    nodes: workflow.nodes,
-    connections: workflow.connections,
-  });
-
-  // Generate execution instructions
-  const instructions = generateExecutionInstructions(workflow, {
-    provider: 'roo-code',
-    highlightEnabled: options?.highlightEnabled,
-  });
-
-  // Compose SKILL.md body
-  const body = `# ${workflow.name}
-
-## Workflow Diagram
-
-${mermaidContent}
-
-## Execution Instructions
-
-${instructions}`;
-
-  return `${frontmatter}\n\n${body}`;
+  return generateAgentSkillContent(workflow, 'roo-code', options);
 }
 
-/**
- * Check if Roo Code skill already exists
- *
- * @param workflow - Workflow to check
- * @param fileService - File service instance
- * @returns Path to existing skill file, or null if not exists
- */
-export async function checkExistingRooCodeSkill(
+export function checkExistingRooCodeSkill(
   workflow: Workflow,
   fileService: FileService
 ): Promise<string | null> {
-  const workspacePath = fileService.getWorkspacePath();
-  const skillName = nodeNameToFileName(workflow.name);
-  const skillPath = path.join(workspacePath, '.roo', 'skills', skillName, 'SKILL.md');
-
-  if (await fileService.fileExists(skillPath)) {
-    return skillPath;
-  }
-  return null;
+  return checkExistingAgentSkill(workflow, 'roo-code', fileService);
 }
 
-/**
- * Export workflow as Roo Code Skill
- *
- * Exports to .roo/skills/{name}/SKILL.md
- *
- * @param workflow - Workflow to export
- * @param fileService - File service instance
- * @returns Export result
- */
-export async function exportWorkflowAsRooCodeSkill(
+export function exportWorkflowAsRooCodeSkill(
   workflow: Workflow,
   fileService: FileService,
   options?: { highlightEnabled?: boolean }
 ): Promise<RooCodeSkillExportResult> {
-  try {
-    const workspacePath = fileService.getWorkspacePath();
-    const skillName = nodeNameToFileName(workflow.name);
-    const skillDir = path.join(workspacePath, '.roo', 'skills', skillName);
-    const skillPath = path.join(skillDir, 'SKILL.md');
-
-    // Ensure directory exists
-    await fileService.createDirectory(skillDir);
-
-    // Generate and write SKILL.md content
-    const content = generateRooCodeSkillContent(workflow, options);
-    await fileService.writeFile(skillPath, content);
-
-    return {
-      success: true,
-      skillPath,
-      skillName,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      skillPath: '',
-      skillName: '',
-      errors: [error instanceof Error ? error.message : 'Unknown error'],
-    };
-  }
+  return exportWorkflowAsAgentSkill(workflow, 'roo-code', fileService, options);
 }

@@ -20,6 +20,7 @@ export * from './constants/built-in-sub-agents.js';
 export * from './services/workflow-prompt-generator.js';
 export * from './services/workflow-overview-formatter.js';
 export * from './services/workflow-export.js';
+export * from './services/agent-skill-export.js';
 
 // Pure validation, migration, schema parsing.
 export * from './utils/validate-workflow.js';

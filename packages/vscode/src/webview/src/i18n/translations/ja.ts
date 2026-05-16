@@ -31,7 +31,7 @@ export const jaWebviewTranslations: WebviewTranslationKeys = {
   'toolbar.save': '保存',
   'toolbar.saving': '保存中...',
   'toolbar.export': '変換',
-  'toolbar.export.tooltip': 'Slash Commandに変換して.claude/commands/に保存',
+  'toolbar.export.tooltip': 'Slash Commandに変換して.claude/skills/に保存',
   'toolbar.exporting': '変換中...',
   'toolbar.refineWithAI': 'AI編集',
   'toolbar.selectWorkflow': 'ワークフローを選択...',

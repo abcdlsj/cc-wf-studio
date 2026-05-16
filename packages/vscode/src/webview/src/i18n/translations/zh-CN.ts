@@ -31,7 +31,7 @@ export const zhCNWebviewTranslations: WebviewTranslationKeys = {
   'toolbar.save': '保存',
   'toolbar.saving': '保存中...',
   'toolbar.export': '导出',
-  'toolbar.export.tooltip': '导出为 Slash Command 并保存到 .claude/commands/',
+  'toolbar.export.tooltip': '导出为 Slash Command 并保存到 .claude/skills/',
   'toolbar.exporting': '导出中...',
   'toolbar.refineWithAI': 'AI编辑',
   'toolbar.selectWorkflow': '选择工作流...',

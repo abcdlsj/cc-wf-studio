@@ -104,8 +104,9 @@
   "scripts": {
     "vscode:prepublish": "npm run build",
     "sync:schema": "mkdir -p resources && cp ../core/resources/workflow-schema.json ../core/resources/workflow-schema.toon resources/",
+    "sync:license": "cp ../../LICENSE LICENSE",
     "generate:editing-flow": "npx tsx scripts/generate-editing-flow.ts",
-    "build": "npm run sync:schema && npm run generate:editing-flow && npm run build:webview && npm run build:extension",
+    "build": "npm run sync:license && npm run sync:schema && npm run generate:editing-flow && npm run build:webview && npm run build:extension",
     "build:dev": "npm run build:webview:dev && npm run build:extension:dev",
     "build:webview": "pnpm --filter cc-wf-studio-webview run build",
     "build:webview:dev": "pnpm --filter cc-wf-studio-webview run build:dev",

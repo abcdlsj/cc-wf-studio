@@ -9,7 +9,7 @@
  *   - `CanvasWorkflowAdapter` in packages/vscode — drives the live webview via
  *     postMessage RPC. Backs the in-process HTTP MCP server on port 6282.
  *   - `FileWorkflowAdapter` in this package — reads/writes a single `.json`
- *     workflow file. Backs the `cc-wf-mcp` stdio bin.
+ *     workflow file. Backs the `ccwf-mcp` stdio bin.
  */
 
 import type { Workflow } from '@cc-wf-studio/core';

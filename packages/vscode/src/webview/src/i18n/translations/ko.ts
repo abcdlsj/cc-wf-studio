@@ -31,7 +31,7 @@ export const koWebviewTranslations: WebviewTranslationKeys = {
   'toolbar.save': '저장',
   'toolbar.saving': '저장 중...',
   'toolbar.export': '내보내기',
-  'toolbar.export.tooltip': 'Slash Command로 내보내 .claude/commands/에 저장',
+  'toolbar.export.tooltip': 'Slash Command로 내보내 .claude/skills/에 저장',
   'toolbar.exporting': '내보내는 중...',
   'toolbar.refineWithAI': 'AI로 편집',
   'toolbar.selectWorkflow': '워크플로 선택...',

@@ -17,9 +17,13 @@
     "check": "pnpm -r run check",
     "lint": "pnpm -r run lint",
     "format": "pnpm -r run format",
-    "test": "pnpm -r run test"
+    "test": "pnpm -r run test",
+    "ccwf": "node packages/cli/dist/cli.js",
+    "ccwf:dev": "tsx packages/cli/src/cli.ts"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0"
+    "@cc-wf-studio/cli": "workspace:*",
+    "@changesets/cli": "^2.31.0",
+    "tsx": "^4.19.2"
   }
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `cc-wf-mcp` — standalone stdio MCP server backed by a workflow file.
+ * `ccwf-mcp` — standalone stdio MCP server backed by a workflow file.
  *
  * Usage:
  *   npx @cc-wf-studio/mcp --file path/to/workflow.json
@@ -14,7 +14,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { createWorkflowMcpServer } from './factory.js';
 import { FileWorkflowAdapter } from './file-adapter.js';
 
-const USAGE = `Usage: cc-wf-mcp --file <path-to-workflow.json> [--project-root <dir>]`;
+const USAGE = `Usage: ccwf-mcp --file <path-to-workflow.json> [--project-root <dir>]`;
 
 async function main(): Promise<void> {
   let parsed: ReturnType<typeof parseArgs<typeof argSpec>>;

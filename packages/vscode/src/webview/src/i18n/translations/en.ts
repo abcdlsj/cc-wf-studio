@@ -31,7 +31,7 @@ export const enWebviewTranslations: WebviewTranslationKeys = {
   'toolbar.save': 'Save',
   'toolbar.saving': 'Saving...',
   'toolbar.export': 'Export',
-  'toolbar.export.tooltip': 'Export as Slash Command and save to .claude/commands/',
+  'toolbar.export.tooltip': 'Export as Slash Command and save to .claude/skills/',
   'toolbar.exporting': 'Exporting...',
   'toolbar.refineWithAI': 'Edit with AI',
   'toolbar.selectWorkflow': 'Select workflow...',

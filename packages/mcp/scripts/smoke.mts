@@ -1,5 +1,5 @@
 /**
- * Smoke test for the cc-wf-mcp bin: spawn it with a fixture workflow, talk
+ * Smoke test for the ccwf-mcp bin: spawn it with a fixture workflow, talk
  * MCP over stdio, and assert every expected tool is exposed and answers
  * basic calls without erroring.
  *
@@ -40,7 +40,7 @@ const EXPECTED_TOOLS = [
 ];
 
 async function main(): Promise<void> {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-wf-mcp-smoke-'));
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ccwf-mcp-smoke-'));
   const fixturePath = path.join(tmpDir, 'workflow.json');
   await fs.writeFile(fixturePath, JSON.stringify(FIXTURE, null, 2), 'utf-8');
 

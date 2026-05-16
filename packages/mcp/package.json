@@ -1,13 +1,13 @@
 {
   "name": "@cc-wf-studio/mcp",
   "version": "0.0.0",
-  "description": "MCP server toolkit for cc-wf-studio workflows. Ships tool definitions, an IO adapter contract, and a stdio bin (cc-wf-mcp) for file-mode usage.",
+  "description": "MCP server toolkit for cc-wf-studio workflows. Ships tool definitions, an IO adapter contract, and a stdio bin (ccwf-mcp) for file-mode usage.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "cc-wf-mcp": "./dist/mcp.js"
+    "ccwf-mcp": "./dist/mcp.js"
   },
   "files": [
     "dist",

@@ -2,7 +2,7 @@
  * File-mode WorkflowIoAdapter.
  *
  * Reads and writes a single workflow JSON file. Suitable for the
- * `cc-wf-mcp --file <path>` standalone stdio server: no canvas, no webview,
+ * `ccwf-mcp --file <path>` standalone stdio server: no canvas, no webview,
  * no live UI feedback.
  *
  * Behavioural notes:

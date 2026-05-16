@@ -21,7 +21,7 @@ pnpm add -D @cc-wf-studio/cli
 | `ccwf mcp --file <file>` | Run the cc-wf-studio stdio MCP server in-process against `<file>`. |
 | `ccwf export <file>` | Materialise the workflow as agent-skill files for a target agent (`--agent <name>`, default `claude-code`). |
 | `ccwf run <file>` | `ccwf export` + a "next step" hint. `--launch` additionally spawns Claude Code when available. |
-| `ccwf preview <file>` | Open the cc-wf-studio canvas in a local browser. Saves write back to the same file. |
+| `ccwf canvas <file>` | (Experimental) Open the full editable cc-wf-studio canvas in a local browser. Saves write back to the same file. A lighter read-only `ccwf preview` is planned next. |
 
 ### `ccwf render`
 
@@ -98,15 +98,17 @@ ccwf run ./my-workflow.json --launch        # write + spawn claude
 ccwf run ./my-workflow.json --agent cursor  # write only (cursor launch not yet wired)
 ```
 
-### `ccwf preview`
+### `ccwf canvas` (experimental)
 
 ```sh
-ccwf preview ./my-workflow.json                # boot, print URL, open browser
-ccwf preview ./my-workflow.json --port 51234   # pin to a port
-ccwf preview ./my-workflow.json --no-open      # boot only (you click the URL)
+ccwf canvas ./my-workflow.json                # boot, print URL, open browser
+ccwf canvas ./my-workflow.json --port 51234   # pin to a port
+ccwf canvas ./my-workflow.json --no-open      # boot only (you click the URL)
 ```
 
-Starts a local HTTP + WebSocket server that serves the bundled webview UI in your browser. Saves from the canvas write back to the same workflow file. Other VSCode-only features (Slack share, Claude API upload, MCP server management, agent-specific export buttons, …) intentionally return a `Not available in preview mode` error so the UI surfaces the limitation rather than hanging.
+`ccwf canvas` brings up the **full editable** cc-wf-studio canvas in a browser. It serves the bundled webview UI from a local HTTP + WebSocket server; saves from the canvas write back to the same workflow file. Other VSCode-only features (Slack share, Claude API upload, MCP server management, agent-specific export buttons, …) intentionally return a `CANVAS_UNSUPPORTED` error so the UI surfaces the limitation rather than hanging.
+
+> **Status**: experimental. The intent is to keep the in-VSCode experience reachable without VSCode for use cases like remote SSH or CI environments. For "just look at this workflow" the upcoming `ccwf preview` (read-only Mermaid + Markdown view) will be lighter — it skips the WebSocket and just renders the `WorkflowOverview` component statically.
 
 **Security**: the server binds to `127.0.0.1` and protects the entry URL with a random token. Do **not** expose the URL on a public network — the WebSocket has no authentication beyond the token in the URL path. Use `--host` only when you understand the implications.
 

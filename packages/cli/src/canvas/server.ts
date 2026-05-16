@@ -1,5 +1,5 @@
 /**
- * `ccwf preview` HTTP + WebSocket server.
+ * `ccwf canvas` HTTP + WebSocket server.
  *
  * Serves the bundled webview at `/` and a long-lived WebSocket at `/ws/<token>`
  * that emulates the VSCode webview message channel. The browser-side polyfill
@@ -8,8 +8,8 @@
  * code can run unmodified.
  *
  * Threat model: localhost binding + URL-token. Sufficient for single-user
- * developer-machine use, NOT a public-facing preview. The README and the
- * `preview` command's stdout both spell this out.
+ * developer-machine use, NOT a public-facing endpoint. The README and the
+ * `canvas` command's stdout both spell this out.
  */
 
 import { randomBytes } from 'node:crypto';
@@ -35,18 +35,18 @@ const MIME_TYPES: Record<string, string> = {
   '.map': 'application/json; charset=utf-8',
 };
 
-export interface PreviewServerHandlers {
+export interface CanvasServerHandlers {
   /** Handle an incoming postMessage from the browser. May call `send`. */
   onMessage(message: unknown, send: (payload: unknown) => void): Promise<void> | void;
   /** Optional initial state to push when a new WebSocket connects. */
   onConnect?(send: (payload: unknown) => void): Promise<void> | void;
 }
 
-export interface PreviewServerOptions {
+export interface CanvasServerOptions {
   /** Absolute path to the directory containing built webview assets (`index.html`, `assets/*`). */
   webviewDistDir: string;
   /** Message router for incoming postMessage payloads. */
-  handlers: PreviewServerHandlers;
+  handlers: CanvasServerHandlers;
   /** Static config exposed to the browser as `window.__CC_WF_BOOTSTRAP__`. */
   bootstrapConfig?: Record<string, unknown>;
   /** Bind host. Default `127.0.0.1` — never bind to 0.0.0.0 without a token check. */
@@ -55,7 +55,7 @@ export interface PreviewServerOptions {
   port?: number;
 }
 
-export interface PreviewServerHandle {
+export interface CanvasServerHandle {
   host: string;
   port: number;
   token: string;
@@ -157,9 +157,9 @@ async function serveStatic(
   }
 }
 
-export async function startPreviewServer(
-  options: PreviewServerOptions
-): Promise<PreviewServerHandle> {
+export async function startCanvasServer(
+  options: CanvasServerOptions
+): Promise<CanvasServerHandle> {
   const host = options.host ?? '127.0.0.1';
   const token = randomBytes(16).toString('hex');
   const bootstrapConfig: Record<string, unknown> = {
@@ -235,7 +235,7 @@ export async function startPreviewServer(
 
   const address = httpServer.address();
   if (!address || typeof address === 'string') {
-    throw new Error('Preview server did not return an inet address.');
+    throw new Error('Canvas server did not return an inet address.');
   }
   const port = address.port;
   bootstrapConfig.wsUrl = `ws://${host}:${port}/ws/${token}`;

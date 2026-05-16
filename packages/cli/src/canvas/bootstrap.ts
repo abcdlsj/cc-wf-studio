@@ -1,10 +1,10 @@
 /**
- * Source of the `/bootstrap.js` script the preview HTTP server serves.
+ * Source of the `/bootstrap.js` script the canvas HTTP server serves.
  *
  * Defines `window.acquireVsCodeApi` so the existing webview code (which calls
  * `window.acquireVsCodeApi?.()` on boot) gets a WebSocket-backed transport
  * instead of the real VSCode API. Messages from the webview travel through the
- * WebSocket to the preview server's handlers; replies are dispatched back as
+ * WebSocket to the canvas server's handlers; replies are dispatched back as
  * `MessageEvent`s on `window`, matching what VSCode's webview API does.
  *
  * The script intentionally runs as a classic script (not a module) so it
@@ -28,13 +28,13 @@ export const BOOTSTRAP_SOURCE = `(function () {
     try {
       data = JSON.parse(event.data);
     } catch (err) {
-      console.error('[ccwf preview] non-JSON message from server:', event.data);
+      console.error('[ccwf canvas] non-JSON message from server:', event.data);
       return;
     }
     window.dispatchEvent(new MessageEvent('message', { data: data }));
   });
   ws.addEventListener('close', function () {
-    console.warn('[ccwf preview] WebSocket closed. Reload the page to reconnect.');
+    console.warn('[ccwf canvas] WebSocket closed. Reload the page to reconnect.');
   });
   window.acquireVsCodeApi = function () {
     return {

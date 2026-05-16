@@ -1,10 +1,18 @@
 /**
- * `ccwf preview <file>` — open the cc-wf-studio canvas in a browser.
+ * `ccwf canvas <file>` — open the full editable cc-wf-studio canvas in a browser.
  *
  * Starts a localhost HTTP + WebSocket server that serves the bundled webview
  * and emulates the VSCode message channel for the single workflow file passed
- * on the command line. Useful in environments without VSCode (remote SSH,
- * GitHub Codespaces terminals, etc.) for "just look at this workflow".
+ * on the command line. The browser-side workflow can be edited and saved; the
+ * CLI process persists changes back to the same file through the WebSocket
+ * bridge.
+ *
+ * Status: experimental — the long-running mirror of the VSCode extension's
+ * editor. Most VSCode-API-bound features (Slack share, Claude API upload,
+ * external IDE export buttons, MCP server management) deliberately return
+ * `CANVAS_UNSUPPORTED` because they have no analogue on a plain browser /
+ * Node.js process. For "just view a workflow" use `ccwf preview` (lighter,
+ * read-only, planned in a follow-up).
  *
  * Security model: 127.0.0.1 only + random URL token. NOT designed for network
  * exposure — the warning is printed on startup.
@@ -15,11 +23,11 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
-import { createPreviewHandlers } from '../preview/handlers.js';
-import { startPreviewServer } from '../preview/server.js';
+import { createCanvasHandlers } from '../canvas/handlers.js';
+import { startCanvasServer } from '../canvas/server.js';
 import { WorkflowLoadError, loadWorkflowFromFile } from '../utils/load-workflow.js';
 
-interface PreviewOptions {
+interface CanvasOptions {
   port?: string;
   host?: string;
   noOpen?: boolean;
@@ -33,7 +41,7 @@ interface PreviewOptions {
  */
 async function resolveWebviewDistDir(): Promise<string> {
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-  // The compiled entry lives at `<pkg>/dist/commands/preview.js`, so the
+  // The compiled entry lives at `<pkg>/dist/commands/canvas.js`, so the
   // webview is two levels up: `<pkg>/dist/webview/`.
   const candidates = [
     path.resolve(moduleDir, '../webview'),
@@ -81,30 +89,30 @@ function openInBrowser(url: string): void {
   }
 }
 
-export function registerPreviewCommand(program: Command): void {
+export function registerCanvasCommand(program: Command): void {
   program
-    .command('preview')
+    .command('canvas')
     .description(
-      'Open the cc-wf-studio canvas for <file> in a local browser. Saves write back to the same file.'
+      'Open the full editable cc-wf-studio canvas for <file> in a local browser (experimental). Saves write back to the same file.'
     )
     .argument('<file>', 'Path to a workflow JSON file.')
     .option('--port <number>', 'Preferred port (default: ephemeral / 0).')
     .option('--host <address>', 'Bind host. Default 127.0.0.1; do not change for public networks.')
     .option('--no-open', "Don't try to launch a browser automatically.")
-    .action(async (file: string, options: PreviewOptions) => {
+    .action(async (file: string, options: CanvasOptions) => {
       try {
         // Validate the file is parseable JSON up-front so the user gets a clear
         // error instead of a confused empty canvas in the browser.
         await loadWorkflowFromFile(file);
 
         const webviewDistDir = await resolveWebviewDistDir();
-        const handlers = createPreviewHandlers({ workflowPath: file });
+        const handlers = createCanvasHandlers({ workflowPath: file });
         const portOption = options.port ? Number(options.port) : 0;
         if (Number.isNaN(portOption)) {
           process.stderr.write(`error: --port must be a number, got '${options.port}'\n`);
           process.exit(2);
         }
-        const server = await startPreviewServer({
+        const server = await startCanvasServer({
           webviewDistDir,
           handlers,
           host: options.host,
@@ -113,7 +121,7 @@ export function registerPreviewCommand(program: Command): void {
         });
 
         const banner = [
-          `ccwf preview server listening at ${server.url}`,
+          `ccwf canvas server listening at ${server.url}`,
           `  workflow: ${path.resolve(file)}`,
           `  bind:     ${server.host}:${server.port}`,
           `  ws path:  /ws/${server.token}`,
@@ -129,7 +137,7 @@ export function registerPreviewCommand(program: Command): void {
         }
 
         const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
-          process.stdout.write(`\nReceived ${signal}, shutting down ccwf preview…\n`);
+          process.stdout.write(`\nReceived ${signal}, shutting down ccwf canvas…\n`);
           try {
             await server.close();
           } catch (error) {

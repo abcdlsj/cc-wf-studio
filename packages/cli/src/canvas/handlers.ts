@@ -1,5 +1,5 @@
 /**
- * Preview-mode message handlers.
+ * Canvas-mode message handlers.
  *
  * The webview was originally built against the VSCode extension's message
  * contract; here we re-implement just enough of it to:
@@ -7,18 +7,18 @@
  *   - answer the workflow list / load / save requests
  *   - persist the file when the user clicks "Save"
  * Everything else (Slack, Claude API, MCP, export-for-*) returns an `ERROR`
- * envelope with a friendly "Not available in preview mode" message so the
+ * envelope with a friendly "Not available in canvas mode" message so the
  * webview shows the failure inline instead of hanging forever.
  */
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { type Workflow, migrateWorkflow } from '@cc-wf-studio/core';
-import type { PreviewServerHandlers } from './server.js';
+import type { CanvasServerHandlers } from './server.js';
 
 // Local shape declarations for the message envelopes the webview expects.
 // These mirror `packages/vscode/src/shared/types/messages.ts` for the handful
-// of types preview actually answers. Keeping a small local copy avoids reaching
+// of types canvas actually answers. Keeping a small local copy avoids reaching
 // into vscode's source tree from the CLI build.
 interface InitialStatePayload {
   isFirstTimeUser: boolean;
@@ -50,13 +50,13 @@ interface IncomingMessage {
   payload?: unknown;
 }
 
-export interface PreviewHandlersOptions {
-  /** Absolute path to the workflow JSON the user passed to `ccwf preview`. */
+export interface CanvasHandlersOptions {
+  /** Absolute path to the workflow JSON the user passed to `ccwf canvas`. */
   workflowPath: string;
 }
 
 // Heuristic: any message type that starts with one of these prefixes is
-// extension-side functionality the preview server intentionally does not
+// extension-side functionality the canvas server intentionally does not
 // implement. Listed by prefix so adding a new export-for-X message in the
 // future continues to surface a clean "not available" error here.
 const UNSUPPORTED_PREFIXES: readonly string[] = [
@@ -84,11 +84,11 @@ const UNSUPPORTED_PREFIXES: readonly string[] = [
   'UPLOAD_DEPENDENT_',
 ];
 
-function isPreviewUnsupported(type: string): boolean {
+function isCanvasUnsupported(type: string): boolean {
   return UNSUPPORTED_PREFIXES.some((prefix) => type.startsWith(prefix));
 }
 
-export function createPreviewHandlers(options: PreviewHandlersOptions): PreviewServerHandlers {
+export function createCanvasHandlers(options: CanvasHandlersOptions): CanvasServerHandlers {
   const workflowAbsPath = path.resolve(options.workflowPath);
   const workflowId = path.basename(workflowAbsPath, '.json');
   const workflowDisplayName = workflowId;
@@ -111,7 +111,7 @@ export function createPreviewHandlers(options: PreviewHandlersOptions): PreviewS
             isFirstTimeUser: false,
             unreadReleaseCount: 0,
             showWhatsNewBadge: false,
-            extensionVersion: 'ccwf-preview',
+            extensionVersion: 'ccwf-canvas',
             recentWorkflows: [{ id: workflowId, name: workflowDisplayName }],
           };
           send({ type: 'INITIAL_STATE', payload: initialState });
@@ -153,7 +153,7 @@ export function createPreviewHandlers(options: PreviewHandlersOptions): PreviewS
               requestId,
               payload: {
                 code: 'LOAD_FAILED',
-                message: `Preview only serves "${workflowId}"; "${req.workflowId}" is unavailable.`,
+                message: `Canvas only serves "${workflowId}"; "${req.workflowId}" is unavailable.`,
               },
             });
             return;
@@ -207,7 +207,7 @@ export function createPreviewHandlers(options: PreviewHandlersOptions): PreviewS
         }
 
         case 'STATE_UPDATE':
-          // State persistence is a no-op in preview; the canvas already has
+          // State persistence is a no-op in canvas; the canvas already has
           // the latest state in memory.
           return;
 
@@ -216,20 +216,20 @@ export function createPreviewHandlers(options: PreviewHandlersOptions): PreviewS
           return;
 
         default:
-          if (isPreviewUnsupported(type)) {
+          if (isCanvasUnsupported(type)) {
             send({
               type: 'ERROR',
               requestId,
               payload: {
-                code: 'PREVIEW_UNSUPPORTED',
-                message: `'${type}' is not available in preview mode (it requires the full VSCode extension).`,
+                code: 'CANVAS_UNSUPPORTED',
+                message: `'${type}' is not available in canvas mode (it requires the full VSCode extension).`,
               },
             });
             return;
           }
           // Unknown message type — log on the server side but stay silent to
           // the client so we don't break unrelated flows.
-          console.warn(`[ccwf preview] Ignoring unknown message: ${type || '(no type)'}`);
+          console.warn(`[ccwf canvas] Ignoring unknown message: ${type || '(no type)'}`);
       }
     },
   };

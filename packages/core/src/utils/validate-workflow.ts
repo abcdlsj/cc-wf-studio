@@ -18,7 +18,7 @@ import {
   type Workflow,
   type WorkflowHooks,
   type WorkflowNode,
-} from '../types/workflow-definition';
+} from '../types/workflow-definition.js';
 
 export interface ValidationError {
   code: string;

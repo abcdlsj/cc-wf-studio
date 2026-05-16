@@ -7,7 +7,7 @@
  * Based on specs/001-slack-workflow-sharing/contracts/extension-host-api-contracts.md
  */
 
-import type { Workflow } from '../types/workflow-definition';
+import type { Workflow } from '../types/workflow-definition.js';
 
 /**
  * Validation result

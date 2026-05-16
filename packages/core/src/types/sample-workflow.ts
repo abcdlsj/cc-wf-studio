@@ -5,7 +5,7 @@
  * Sample workflows are bundled in resources/samples/ as JSON files.
  */
 
-import type { Workflow } from './workflow-definition';
+import type { Workflow } from './workflow-definition.js';
 
 /**
  * Metadata for a sample workflow, used for listing and display in the UI.

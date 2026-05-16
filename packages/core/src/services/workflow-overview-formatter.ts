@@ -28,8 +28,8 @@ import type {
   SwitchNode,
   Workflow,
   WorkflowNode,
-} from '../types/workflow-definition';
-import { sanitizeNodeId } from './workflow-prompt-generator';
+} from '../types/workflow-definition.js';
+import { sanitizeNodeId } from './workflow-prompt-generator.js';
 
 const SEPARATOR = '\n---\n';
 

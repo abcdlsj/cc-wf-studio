@@ -1,19 +1,35 @@
 /**
- * CC Workflow Studio - Built-in MCP Server Manager
+ * CC Workflow Studio - Built-in MCP Server Manager (Canvas-mode adapter)
  *
- * Provides an MCP server that external AI agents (Claude Code, Roo Code, Copilot, Codex, etc.)
- * can connect to for workflow CRUD operations.
+ * Drives the in-process HTTP MCP server (127.0.0.1, default port 6282) and
+ * implements `WorkflowIoAdapter` so the `@cc-wf-studio/mcp` factory can wire
+ * tool handlers to live webview state via postMessage RPC.
  *
  * Architecture:
- * - HTTP server on 127.0.0.1 (localhost only) with configurable fixed port (default: 6282)
- * - StreamableHTTPServerTransport in stateless mode (no session management)
- * - Webview communication via postMessage for workflow data
- * - lastKnownWorkflow cache for when Webview is closed
+ * - HTTP server with `StreamableHTTPServerTransport` in stateless mode
+ * - Tool definitions and zod schemas live in `@cc-wf-studio/mcp`
+ * - `requestCurrentWorkflow` / `applyWorkflow` send postMessage requests with a
+ *   correlation id; responses come back through `handleWorkflowResponse` and
+ *   `handleApplyResponse` from `commands/open-editor.ts`
+ * - `lastKnownWorkflow` cache is returned when the webview is closed
  */
 
+import * as fs from 'node:fs/promises';
 import * as http from 'node:http';
-import type { Workflow } from '@cc-wf-studio/core';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import * as path from 'node:path';
+import type { Workflow, WorkflowNode } from '@cc-wf-studio/core';
+import {
+  type AgentCommandInfo,
+  type ApplyWorkflowOptions,
+  type ApplyWorkflowResult,
+  createWorkflowMcpServer,
+  type GetCurrentWorkflowResult,
+  type GetWorkflowSchemaResult,
+  type HighlightResult,
+  type ListAvailableAgentsResult,
+  type PlannedSubAgentFile,
+  type WorkflowIoAdapter,
+} from '@cc-wf-studio/mcp';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type * as vscode from 'vscode';
 import type {
@@ -21,10 +37,12 @@ import type {
   ApplyWorkflowFromMcpResponsePayload,
   GetCurrentWorkflowResponsePayload,
   McpConfigTarget,
-  PlannedSubAgentFile,
 } from '../../shared/types/messages';
 import { log } from '../extension';
-import { registerMcpTools } from './mcp-server-tools';
+import { getProjectCommandsDir } from '../utils/path-utils';
+import { scanAllCommands } from './command-service';
+import { generateSubAgentFile, nodeNameToFileName } from './export-service';
+import { getDefaultSchemaPath, loadWorkflowSchemaToon } from './schema-loader-service';
 
 const REQUEST_TIMEOUT_MS = 10000;
 const APPLY_WITH_REVIEW_TIMEOUT_MS = 120000;
@@ -35,7 +53,9 @@ interface PendingRequest<T> {
   timer: ReturnType<typeof setTimeout>;
 }
 
-export class McpServerManager {
+type PlannedFileWithContent = PlannedSubAgentFile & { content: string };
+
+export class McpServerManager implements WorkflowIoAdapter {
   private httpServer: http.Server | null = null;
   private port: number | null = null;
   private lastKnownWorkflow: Workflow | null = null;
@@ -58,7 +78,6 @@ export class McpServerManager {
 
     this.extensionPath = extensionPath;
 
-    // Create HTTP server
     this.httpServer = http.createServer(async (req, res) => {
       // DNS rebinding protection: validate Host header
       const host = (req.headers.host || '').split(':')[0];
@@ -71,8 +90,6 @@ export class McpServerManager {
         return;
       }
 
-      // DNS rebinding protection: validate Origin header (if present)
-      // CLI clients (e.g. Claude Code) don't send Origin, so only validate when present
       const origin = req.headers.origin;
       if (origin) {
         let isLocalOrigin = false;
@@ -83,7 +100,6 @@ export class McpServerManager {
             (originHost === '127.0.0.1' || originHost === 'localhost') &&
             originUrl.protocol === 'http:';
         } catch {
-          // Invalid URL format - treat as non-local
           isLocalOrigin = false;
         }
         if (!isLocalOrigin) {
@@ -96,7 +112,6 @@ export class McpServerManager {
         }
       }
 
-      // Use hardcoded localhost instead of trusting Host header for URL construction
       const url = new URL(req.url || '/', 'http://127.0.0.1');
 
       if (url.pathname !== '/mcp') {
@@ -105,21 +120,14 @@ export class McpServerManager {
         return;
       }
 
-      // Handle MCP requests
       if (req.method === 'POST' || req.method === 'GET' || req.method === 'DELETE') {
-        let mcpServer: McpServer | undefined;
+        let mcpServer: ReturnType<typeof createWorkflowMcpServer> | undefined;
         try {
-          // Create a new MCP server + transport per request (stateless mode)
-          // McpServer.connect() can only be called once per instance,
-          // so we must create a fresh instance for each request.
-          mcpServer = new McpServer({
-            name: 'cc-workflow-studio',
-            version: '1.0.0',
-          });
-          registerMcpTools(mcpServer, this);
+          // Per-request server (stateless transport, connect() is one-shot).
+          mcpServer = createWorkflowMcpServer(this);
 
           const transport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: undefined, // stateless
+            sessionIdGenerator: undefined,
           });
 
           await mcpServer.connect(transport);
@@ -134,7 +142,6 @@ export class McpServerManager {
             res.end(JSON.stringify({ error: 'Internal server error' }));
           }
         } finally {
-          // Clean up to prevent EventEmitter listener accumulation
           if (mcpServer) {
             await mcpServer.close().catch(() => {});
           }
@@ -145,7 +152,6 @@ export class McpServerManager {
       }
     });
 
-    // Start listening on configured port (default: 6282), localhost only
     const listenPort = port ?? 0;
     const httpServer = this.httpServer;
     return new Promise<number>((resolve, reject) => {
@@ -166,9 +172,7 @@ export class McpServerManager {
           log('ERROR', 'MCP Server: Port in use', { port: listenPort });
           reject(new Error(msg));
         } else {
-          log('ERROR', 'MCP Server: HTTP server error', {
-            error: error.message,
-          });
+          log('ERROR', 'MCP Server: HTTP server error', { error: error.message });
           reject(error);
         }
       });
@@ -185,7 +189,6 @@ export class McpServerManager {
       this.port = null;
 
       return new Promise<void>((resolve) => {
-        // Force close after timeout to prevent hanging
         const forceCloseTimer = setTimeout(() => {
           log('WARN', 'MCP Server: Force closing after timeout');
           server.closeAllConnections();
@@ -241,7 +244,6 @@ export class McpServerManager {
     return this.reviewBeforeApply;
   }
 
-  // Webview lifecycle
   setWebview(webview: vscode.Webview | null): void {
     this.webview = webview;
   }
@@ -250,99 +252,163 @@ export class McpServerManager {
     this.lastKnownWorkflow = workflow;
   }
 
-  // Called by MCP tools to get current workflow
-  async requestCurrentWorkflow(): Promise<{
-    workflow: Workflow | null;
-    isStale: boolean;
-    revision: number;
-  }> {
-    // If webview is available, request fresh data
+  // -----------------------------------------------------------------------
+  // WorkflowIoAdapter implementation
+  // -----------------------------------------------------------------------
+
+  async getCurrentWorkflow(): Promise<GetCurrentWorkflowResult> {
     if (this.webview) {
       const correlationId = `mcp-get-${Date.now()}-${Math.random()}`;
 
-      return new Promise<{ workflow: Workflow | null; isStale: boolean; revision: number }>(
-        (resolve, reject) => {
-          const timer = setTimeout(() => {
-            this.pendingWorkflowRequests.delete(correlationId);
-            // Fallback to cache on timeout
-            if (this.lastKnownWorkflow) {
-              resolve({ workflow: this.lastKnownWorkflow, isStale: true, revision: -1 });
-            } else {
-              reject(new Error('Timeout waiting for workflow from Webview'));
-            }
-          }, REQUEST_TIMEOUT_MS);
+      const result = await new Promise<{
+        workflow: Workflow | null;
+        isStale: boolean;
+        revision: number;
+      }>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          this.pendingWorkflowRequests.delete(correlationId);
+          if (this.lastKnownWorkflow) {
+            resolve({ workflow: this.lastKnownWorkflow, isStale: true, revision: -1 });
+          } else {
+            reject(new Error('Timeout waiting for workflow from Webview'));
+          }
+        }, REQUEST_TIMEOUT_MS);
 
-          this.pendingWorkflowRequests.set(correlationId, { resolve, reject, timer });
+        this.pendingWorkflowRequests.set(correlationId, { resolve, reject, timer });
 
-          this.webview?.postMessage({
-            type: 'GET_CURRENT_WORKFLOW_REQUEST',
-            payload: { correlationId },
-          });
-        }
-      );
+        this.webview?.postMessage({
+          type: 'GET_CURRENT_WORKFLOW_REQUEST',
+          payload: { correlationId },
+        });
+      });
+
+      if (!result.workflow) {
+        return { workflow: null };
+      }
+      return {
+        workflow: result.workflow,
+        revision: String(result.revision),
+        isStale: result.isStale,
+      };
     }
 
-    // Webview is closed, return cached workflow
     if (this.lastKnownWorkflow) {
-      return { workflow: this.lastKnownWorkflow, isStale: true, revision: -1 };
+      return {
+        workflow: this.lastKnownWorkflow,
+        revision: '-1',
+        isStale: true,
+      };
     }
 
-    return { workflow: null, isStale: false, revision: -1 };
+    return { workflow: null };
   }
 
-  // Called by MCP tools to apply workflow to canvas
-  async applyWorkflowToCanvas(
+  async applyWorkflow(
     workflow: Workflow,
-    description?: string,
-    plannedFiles?: PlannedSubAgentFile[],
-    expectedRevision?: number
-  ): Promise<boolean> {
+    opts: ApplyWorkflowOptions
+  ): Promise<ApplyWorkflowResult> {
     if (!this.webview) {
-      throw new Error('Webview is not open. Please open CC Workflow Studio first.');
+      return {
+        success: false,
+        error: 'Webview is not open. Please open CC Workflow Studio first.',
+      };
     }
+
+    const expectedRevision =
+      opts.expectedRevision !== undefined ? Number(opts.expectedRevision) : undefined;
 
     const requireConfirmation = this.reviewBeforeApply;
     const timeoutMs = requireConfirmation ? APPLY_WITH_REVIEW_TIMEOUT_MS : REQUEST_TIMEOUT_MS;
     const correlationId = `mcp-apply-${Date.now()}-${Math.random()}`;
 
-    return new Promise<boolean>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        this.pendingApplyRequests.delete(correlationId);
-        reject(new Error('Timeout waiting for workflow apply confirmation'));
-      }, timeoutMs);
+    try {
+      const success = await new Promise<boolean>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          this.pendingApplyRequests.delete(correlationId);
+          reject(new Error('Timeout waiting for workflow apply confirmation'));
+        }, timeoutMs);
 
-      this.pendingApplyRequests.set(correlationId, { resolve, reject, timer });
+        this.pendingApplyRequests.set(correlationId, { resolve, reject, timer });
 
-      this.webview?.postMessage({
-        type: 'APPLY_WORKFLOW_FROM_MCP',
-        payload: {
-          correlationId,
-          workflow,
-          requireConfirmation,
-          description,
-          ...(plannedFiles && plannedFiles.length > 0 ? { plannedFiles } : {}),
-          ...(expectedRevision !== undefined ? { expectedRevision } : {}),
-        },
+        this.webview?.postMessage({
+          type: 'APPLY_WORKFLOW_FROM_MCP',
+          payload: {
+            correlationId,
+            workflow,
+            requireConfirmation,
+            description: opts.description,
+            ...(opts.plannedFiles && opts.plannedFiles.length > 0
+              ? { plannedFiles: opts.plannedFiles }
+              : {}),
+            ...(expectedRevision !== undefined ? { expectedRevision } : {}),
+          },
+        });
       });
-    });
+      return { success };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
-  // Highlight a group node on the canvas (called by MCP tool)
-  highlightGroupNode(groupNodeId: string | null): void {
+  async highlightGroupNode(groupNodeId: string | null): Promise<HighlightResult> {
     this.webview?.postMessage({
       type: 'HIGHLIGHT_GROUP_NODE',
       payload: { groupNodeId },
     });
+    return { success: true };
   }
 
-  // Response handlers called from open-editor.ts
+  async getWorkflowSchemaToon(): Promise<GetWorkflowSchemaResult> {
+    if (!this.extensionPath) {
+      return { success: false, error: 'Extension path not available' };
+    }
+    const schemaPath = getDefaultSchemaPath(this.extensionPath);
+    const result = await loadWorkflowSchemaToon(schemaPath);
+    if (!result.success || !result.schemaString) {
+      return {
+        success: false,
+        error: result.error?.message || 'Failed to load schema',
+      };
+    }
+    return { success: true, schema: result.schemaString };
+  }
+
+  async listAvailableAgents(_includeContent: boolean): Promise<ListAvailableAgentsResult> {
+    const { user, project } = await scanAllCommands();
+    const map = (cmd: (typeof user)[number]): AgentCommandInfo => ({
+      name: cmd.name,
+      description: cmd.description,
+      scope: cmd.scope,
+      commandPath: cmd.commandPath,
+      promptContent: cmd.promptContent,
+    });
+    return {
+      user: user.map(map),
+      project: project.map(map),
+    };
+  }
+
+  async planAndPersistSubAgentFiles(workflow: Workflow): Promise<PlannedSubAgentFile[]> {
+    const planned = await planSubAgentFiles(workflow);
+    if (planned.length > 0) {
+      await executeSubAgentFileCreation(planned);
+    }
+    return planned.map(({ content: _content, ...rest }) => rest);
+  }
+
+  // -----------------------------------------------------------------------
+  // Webview response handlers (invoked from commands/open-editor.ts)
+  // -----------------------------------------------------------------------
+
   handleWorkflowResponse(payload: GetCurrentWorkflowResponsePayload): void {
     const pending = this.pendingWorkflowRequests.get(payload.correlationId);
     if (pending) {
       clearTimeout(pending.timer);
       this.pendingWorkflowRequests.delete(payload.correlationId);
 
-      // Update cache
       if (payload.workflow) {
         this.lastKnownWorkflow = payload.workflow;
       }
@@ -368,4 +434,124 @@ export class McpServerManager {
       }
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Sub-agent file planning helpers (moved from the deleted mcp-server-tools.ts).
+// They live next to the canvas adapter because the auto-create flow is
+// canvas-mode-specific: only the manager has the right project dir context.
+// ---------------------------------------------------------------------------
+
+async function planSubAgentFiles(workflow: unknown): Promise<PlannedFileWithContent[]> {
+  if (typeof workflow !== 'object' || workflow === null) {
+    return [];
+  }
+
+  const wf = workflow as { nodes?: WorkflowNode[] };
+  if (!Array.isArray(wf.nodes)) {
+    return [];
+  }
+
+  const subAgentNodes = wf.nodes.filter(
+    (n) =>
+      n.type === 'subAgent' &&
+      !(n.data as { commandFilePath?: string }).commandFilePath &&
+      !(n.data as { builtInType?: string }).builtInType
+  );
+
+  if (subAgentNodes.length === 0) {
+    return [];
+  }
+
+  const projectAgentsDir = getProjectCommandsDir();
+  if (!projectAgentsDir) {
+    return [];
+  }
+
+  const planned: PlannedFileWithContent[] = [];
+
+  for (const node of subAgentNodes) {
+    const data = node.data as {
+      description?: string;
+      agentDefinition?: string;
+      prompt?: string;
+      model?: string;
+      tools?: string;
+      memory?: string;
+      color?: string;
+      commandFilePath?: string;
+      commandScope?: string;
+      outputPorts?: number;
+    };
+
+    const baseName = nodeNameToFileName(data.description || node.name || 'sub-agent');
+
+    let fileName = `${baseName}.md`;
+    let filePath = path.join(projectAgentsDir, fileName);
+    let suffix = 1;
+    try {
+      while (
+        await fs
+          .access(filePath)
+          .then(() => true)
+          .catch(() => false)
+      ) {
+        fileName = `${baseName}-${suffix}.md`;
+        filePath = path.join(projectAgentsDir, fileName);
+        suffix++;
+      }
+    } catch {
+      // fs.access throws on not-found; that's the happy path.
+    }
+
+    const pseudoNode = {
+      id: node.id,
+      type: 'subAgent' as const,
+      name: data.description || node.name || 'sub-agent',
+      position: node.position,
+      data: {
+        description: data.description || '',
+        agentDefinition: data.agentDefinition || '',
+        prompt: data.prompt || '',
+        model: data.model,
+        tools: data.tools,
+        memory: data.memory as 'user' | 'project' | 'local' | undefined,
+        color: data.color,
+        outputPorts: data.outputPorts || 1,
+      },
+    };
+
+    const content = generateSubAgentFile(pseudoNode);
+
+    // Mutate in-place so downstream validation passes.
+    data.commandFilePath = filePath;
+    data.commandScope = 'project';
+
+    planned.push({
+      nodeId: node.id,
+      nodeName: data.description || node.name || 'sub-agent',
+      filePath,
+      content,
+    });
+  }
+
+  return planned;
+}
+
+async function executeSubAgentFileCreation(
+  plannedFiles: PlannedFileWithContent[]
+): Promise<string[]> {
+  if (plannedFiles.length === 0) return [];
+
+  const dir = path.dirname(plannedFiles[0].filePath);
+  const dotClaudeDir = path.dirname(dir);
+  await fs.mkdir(dotClaudeDir, { recursive: true });
+  await fs.mkdir(dir, { recursive: true });
+
+  const createdFiles: string[] = [];
+  for (const file of plannedFiles) {
+    await fs.writeFile(file.filePath, file.content, 'utf-8');
+    createdFiles.push(file.filePath);
+  }
+  return createdFiles;
 }

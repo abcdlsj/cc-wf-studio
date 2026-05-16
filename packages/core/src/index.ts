@@ -9,28 +9,28 @@
  */
 
 // Primary workflow types and validation rules.
-export * from './types/workflow-definition';
-export * from './types/ai-metrics';
-export * from './types/sample-workflow';
+export * from './types/workflow-definition.js';
+export * from './types/ai-metrics.js';
+export * from './types/sample-workflow.js';
 
 // Built-in sub-agent metadata.
-export * from './constants/built-in-sub-agents';
+export * from './constants/built-in-sub-agents.js';
 
 // Pure formatters / generators.
-export * from './services/workflow-prompt-generator';
-export * from './services/workflow-overview-formatter';
+export * from './services/workflow-prompt-generator.js';
+export * from './services/workflow-overview-formatter.js';
 
 // Pure validation, migration, schema parsing.
-export * from './utils/validate-workflow';
-export * from './utils/migrate-workflow';
-export * from './utils/schema-parser';
+export * from './utils/validate-workflow.js';
+export * from './utils/migrate-workflow.js';
+export * from './utils/schema-parser.js';
 
 // Slack workflow validator — its `ValidationResult` collides with the AI
 // validator's identical name, so re-export it under a distinct alias.
 export {
   validateWorkflowFile,
   type ValidationResult as SlackValidationResult,
-} from './utils/workflow-validator';
+} from './utils/workflow-validator.js';
 
 // mcp-node has its own `McpNodeData` / `ToolParameter` that pre-date and
 // drifted from workflow-definition's versions. Reach those types and helpers

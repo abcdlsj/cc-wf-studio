@@ -132,6 +132,7 @@
   },
   "dependencies": {
     "@cc-wf-studio/core": "workspace:*",
+    "@cc-wf-studio/mcp": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@slack/web-api": "^7.13.0",
     "@toon-format/toon": "^2.1.0",

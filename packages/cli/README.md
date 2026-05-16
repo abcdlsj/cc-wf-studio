@@ -106,7 +106,10 @@ ccwf preview ./my-workflow.json                 # boot, print URL, open browser
 ccwf preview ./my-workflow.json --watch         # also reload on file changes
 ccwf preview ./my-workflow.json --port 51234    # pin to a port
 ccwf preview ./my-workflow.json --no-open       # boot only (you click the URL)
+ccwf preview ./my-workflow.json --keep-alive    # don't auto-shutdown when the tab closes
 ```
+
+By default the server auto-shuts down **30 seconds after the last viewer tab closes**, so you don't leak listeners after a one-off "open and read" session. The countdown only starts once at least one browser has actually connected — `--no-open` runs that nobody opens are kept alive indefinitely. Pass `--keep-alive` to keep the server running until you hit Ctrl+C (useful for multiple tabs, LAN sharing, or reconnecting later).
 
 Read-only viewer powered by the `WorkflowOverview` component the VSCode extension already ships:
 - **Left**: Mermaid flow rendered from the workflow nodes / connections.

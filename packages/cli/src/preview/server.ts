@@ -43,6 +43,17 @@ export interface PreviewServerOptions {
   host?: string;
   /** Preferred port. `0` (default) asks the OS for any free port. */
   port?: number;
+  /**
+   * Auto-shutdown after every SSE client disconnects, in ms. The timer starts
+   * once at least one client has connected (so `--no-open` runs that nobody
+   * ever opens don't shut themselves down). Set to `0` or omit to disable.
+   */
+  autoShutdownAfterMs?: number;
+  /**
+   * Invoked when the auto-shutdown timer fires. The server has already closed
+   * by the time this runs; the CLI uses it to exit the process.
+   */
+  onAutoShutdown?: () => void;
 }
 
 export interface PreviewBootstrap {
@@ -97,6 +108,67 @@ export async function startPreviewServer(
   const token = randomBytes(16).toString('hex');
   let bootstrap: PreviewBootstrap = options.bootstrap;
   const sseClients = new Set<ServerResponse>();
+  const autoShutdownAfterMs = options.autoShutdownAfterMs ?? 0;
+  let hasEverConnected = false;
+  let shutdownTimer: NodeJS.Timeout | null = null;
+  let shuttingDown = false;
+
+  const cancelShutdownTimer = (): void => {
+    if (shutdownTimer) {
+      clearTimeout(shutdownTimer);
+      shutdownTimer = null;
+    }
+  };
+
+  const armShutdownTimerIfIdle = (): void => {
+    if (
+      autoShutdownAfterMs <= 0 ||
+      shuttingDown ||
+      !hasEverConnected ||
+      sseClients.size > 0 ||
+      shutdownTimer !== null
+    ) {
+      return;
+    }
+    shutdownTimer = setTimeout(() => {
+      shutdownTimer = null;
+      if (shuttingDown || sseClients.size > 0) return;
+      shuttingDown = true;
+      // Best-effort teardown: rip down any lingering keep-alive sockets first
+      // (browsers and curl both leave HTTP/1.1 connections idle for many
+      // seconds otherwise, which would block httpServer.close from resolving
+      // and the caller's process.exit from happening promptly), then fire the
+      // callback without awaiting close — the CLI hands us a process.exit, so
+      // any remaining handles are torn down by the runtime.
+      try {
+        httpServer.closeAllConnections?.();
+      } catch {
+        // ignore
+      }
+      void closeInternal();
+      options.onAutoShutdown?.();
+    }, autoShutdownAfterMs);
+  };
+
+  const closeInternal = async (): Promise<void> => {
+    cancelShutdownTimer();
+    for (const client of sseClients) {
+      try {
+        client.end();
+      } catch {
+        // ignore
+      }
+    }
+    sseClients.clear();
+    try {
+      httpServer.closeAllConnections?.();
+    } catch {
+      // ignore
+    }
+    await new Promise<void>((resolve, reject) => {
+      httpServer.close((error) => (error ? reject(error) : resolve()));
+    });
+  };
 
   const serveStatic = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     const rawUrl = req.url ?? '/';
@@ -138,6 +210,9 @@ export async function startPreviewServer(
       // releasing the response headers immediately.
       res.write(': ccwf-preview connected\n\n');
       sseClients.add(res);
+      hasEverConnected = true;
+      // A new client is keeping the server alive; cancel any pending auto-shutdown.
+      cancelShutdownTimer();
       const heartbeat = setInterval(() => {
         try {
           res.write(': heartbeat\n\n');
@@ -148,6 +223,8 @@ export async function startPreviewServer(
       req.on('close', () => {
         clearInterval(heartbeat);
         sseClients.delete(res);
+        // Last browser left? Start the auto-shutdown countdown.
+        armShutdownTimerIfIdle();
       });
       return;
     }
@@ -216,17 +293,8 @@ export async function startPreviewServer(
       }
     },
     async close() {
-      for (const client of sseClients) {
-        try {
-          client.end();
-        } catch {
-          // ignore
-        }
-      }
-      sseClients.clear();
-      await new Promise<void>((resolve, reject) => {
-        httpServer.close((error) => (error ? reject(error) : resolve()));
-      });
+      shuttingDown = true;
+      await closeInternal();
     },
   };
 }

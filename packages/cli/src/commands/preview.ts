@@ -26,7 +26,10 @@ interface PreviewOptions {
   host?: string;
   noOpen?: boolean;
   watch?: boolean;
+  keepAlive?: boolean;
 }
+
+const AUTO_SHUTDOWN_AFTER_MS = 30_000;
 
 async function resolveWebviewDistDir(): Promise<string> {
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
@@ -92,6 +95,11 @@ export function registerPreviewCommand(program: Command): void {
     .option('--host <address>', 'Bind host. Default 127.0.0.1; do not change for public networks.')
     .option('--no-open', "Don't try to launch a browser automatically.")
     .option('--watch', 'Reload the browser whenever <file> changes on disk.', false)
+    .option(
+      '--keep-alive',
+      'Keep the server running after the browser tab is closed. By default the server shuts down 30s after the last viewer disconnects.',
+      false
+    )
     .action(async (file: string, options: PreviewOptions) => {
       try {
         const workflowAbsPath = path.resolve(file);
@@ -104,19 +112,28 @@ export function registerPreviewCommand(program: Command): void {
           process.exit(2);
         }
         const locale = (process.env.LANG?.split('.')[0] ?? 'en').trim() || 'en';
+        const autoShutdownAfterMs = options.keepAlive ? 0 : AUTO_SHUTDOWN_AFTER_MS;
 
         const server = await startPreviewServer({
           webviewDistDir,
           bootstrap: { workflow: initialWorkflow, locale },
           host: options.host,
           port: portOption,
+          autoShutdownAfterMs,
+          onAutoShutdown: () => {
+            process.stdout.write(
+              `\n[ccwf preview] Browser closed; auto-shutdown after ${AUTO_SHUTDOWN_AFTER_MS / 1000}s idle. Pass --keep-alive to disable.\n`
+            );
+            process.exit(0);
+          },
         });
 
-        // Now that we know the listening port, fill in the SSE URL and tell the
-        // server about the updated bootstrap so subsequent reloads pick it up.
-        const sseUrl = options.watch
-          ? `http://${server.host}:${server.port}/events/${server.token}`
-          : undefined;
+        // The SSE channel powers both auto-reload (--watch) and the
+        // disconnect-detection that drives auto-shutdown. Always include the URL
+        // in the bootstrap so the browser keeps the channel open even without
+        // --watch; the server simply doesn't broadcast workflow-changed events
+        // in that case.
+        const sseUrl = `http://${server.host}:${server.port}/events/${server.token}`;
         server.setBootstrap({ workflow: initialWorkflow, locale, sseUrl });
 
         const watcher = options.watch
@@ -139,9 +156,12 @@ export function registerPreviewCommand(program: Command): void {
 
         const banner = [
           `ccwf preview listening at ${server.url}`,
-          `  workflow: ${workflowAbsPath}`,
-          `  bind:     ${server.host}:${server.port}`,
-          options.watch ? `  watch:    on (SSE /events/${server.token})` : `  watch:    off`,
+          `  workflow:        ${workflowAbsPath}`,
+          `  bind:            ${server.host}:${server.port}`,
+          options.watch ? `  watch:           on` : `  watch:           off`,
+          options.keepAlive
+            ? `  auto-shutdown:   off (--keep-alive)`
+            : `  auto-shutdown:   on (${AUTO_SHUTDOWN_AFTER_MS / 1000}s after last viewer leaves)`,
           '',
           'Read-only — saves in this view are disabled by design (use `ccwf canvas` for editing).',
           'localhost-only — DO NOT expose this URL on a public network.',

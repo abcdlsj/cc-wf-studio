@@ -1,0 +1,30 @@
+{
+  "name": "@cc-wf-studio/core",
+  "version": "0.0.0",
+  "description": "Core workflow schema, parser, serializer, Mermaid generation, and Claude Code export logic for cc-wf-studio",
+  "license": "AGPL-3.0-or-later",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breaking-brake/cc-wf-studio",
+    "directory": "packages/core"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "echo 'core: skeleton, no build yet'",
+    "check": "echo 'core: skeleton, no check'",
+    "lint": "echo 'core: skeleton, no lint'",
+    "format": "echo 'core: skeleton, no format'",
+    "test": "echo 'core: skeleton, no test'"
+  }
+}

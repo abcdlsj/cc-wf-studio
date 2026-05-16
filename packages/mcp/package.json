@@ -1,0 +1,33 @@
+{
+  "name": "@cc-wf-studio/mcp",
+  "version": "0.0.0",
+  "description": "Standalone MCP server for cc-wf-studio workflows (file-mode for nvim + Claude Code workflows)",
+  "license": "AGPL-3.0-or-later",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "cc-wf-mcp": "./dist/mcp.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breaking-brake/cc-wf-studio",
+    "directory": "packages/mcp"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "echo 'mcp: skeleton, no build yet'",
+    "check": "echo 'mcp: skeleton, no check'",
+    "lint": "echo 'mcp: skeleton, no lint'",
+    "format": "echo 'mcp: skeleton, no format'",
+    "test": "echo 'mcp: skeleton, no test'"
+  }
+}

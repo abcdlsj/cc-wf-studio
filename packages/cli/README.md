@@ -20,7 +20,8 @@ pnpm add -D @cc-wf-studio/cli
 | `ccwf validate <file>` | Schema-check the workflow JSON. Exit 0/1. `--json` for machine-readable output. |
 | `ccwf mcp --file <file>` | Run the cc-wf-studio stdio MCP server in-process against `<file>`. |
 | `ccwf export <file>` | Materialise the workflow as agent-skill files for a target agent (`--agent <name>`, default `claude-code`). |
-| `ccwf run <file>` | Today: identical to `ccwf export` plus a "next step" hint. Phase 4b will let the agent spawn itself and perform the export + execution. |
+| `ccwf run <file>` | `ccwf export` + a "next step" hint. `--launch` additionally spawns Claude Code when available. |
+| `ccwf canvas <file>` | (Experimental) Open the full editable cc-wf-studio canvas in a local browser. Saves write back to the same file. A lighter read-only `ccwf preview` is planned next. |
 
 ### `ccwf render`
 
@@ -90,7 +91,28 @@ ccwf run ./my-workflow.json                                    # same files as e
 ccwf run ./my-workflow.json --agent cursor                     # forwarded to export
 ```
 
-Today `ccwf run` is a thin wrapper over `ccwf export` (same flags: `--agent`, `--cwd`, `--overwrite`). It adds an agent-specific "next step" line to stdout. **Phase 4b will replace its body** so the chosen agent spawns itself and performs both the skill conversion and the execution — the surface stays compatible.
+`ccwf run` is a thin wrapper over `ccwf export` (same flags: `--agent`, `--cwd`, `--overwrite`). It adds an agent-specific "next step" line to stdout. With `--launch` (best-effort, claude-code only for now) it also walks `PATH` for the `claude` binary and spawns it in the output directory — when the binary is missing or a different agent is selected, the spawn is skipped and a warning is printed.
+
+```sh
+ccwf run ./my-workflow.json --launch        # write + spawn claude
+ccwf run ./my-workflow.json --agent cursor  # write only (cursor launch not yet wired)
+```
+
+### `ccwf canvas` (experimental)
+
+```sh
+ccwf canvas ./my-workflow.json                # boot, print URL, open browser
+ccwf canvas ./my-workflow.json --port 51234   # pin to a port
+ccwf canvas ./my-workflow.json --no-open      # boot only (you click the URL)
+```
+
+`ccwf canvas` brings up the **full editable** cc-wf-studio canvas in a browser. It serves the bundled webview UI from a local HTTP + WebSocket server; saves from the canvas write back to the same workflow file. Other VSCode-only features (Slack share, Claude API upload, MCP server management, agent-specific export buttons, …) intentionally return a `CANVAS_UNSUPPORTED` error so the UI surfaces the limitation rather than hanging.
+
+> **Status**: experimental. The intent is to keep the in-VSCode experience reachable without VSCode for use cases like remote SSH or CI environments. For "just look at this workflow" the upcoming `ccwf preview` (read-only Mermaid + Markdown view) will be lighter — it skips the WebSocket and just renders the `WorkflowOverview` component statically.
+
+**Security**: the server binds to `127.0.0.1` and protects the entry URL with a random token. Do **not** expose the URL on a public network — the WebSocket has no authentication beyond the token in the URL path. Use `--host` only when you understand the implications.
+
+The bundled webview's VSCode message protocol is emulated by a small polyfill (`bootstrap.js`) injected into `index.html`. The webview source is **unchanged** — `window.acquireVsCodeApi` returns a WebSocket-backed transport that talks to this CLI process.
 
 ## Fixtures
 

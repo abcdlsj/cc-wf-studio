@@ -10,6 +10,7 @@
  */
 
 import { Command } from 'commander';
+import { registerCanvasCommand } from './commands/canvas.js';
 import { registerExportCommand } from './commands/export.js';
 import { registerMcpCommand } from './commands/mcp.js';
 import { registerRenderCommand } from './commands/render.js';
@@ -28,6 +29,7 @@ registerValidateCommand(program);
 registerMcpCommand(program);
 registerExportCommand(program);
 registerRunCommand(program);
+registerCanvasCommand(program);
 
 program.parseAsync(process.argv).catch((error) => {
   process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);

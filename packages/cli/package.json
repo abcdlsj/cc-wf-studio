@@ -1,12 +1,13 @@
 {
   "name": "@cc-wf-studio/cli",
   "version": "0.0.0",
-  "description": "CLI for cc-wf-studio: render, run, validate workflows and launch local preview / MCP server",
+  "description": "Command-line tool for cc-wf-studio: render, validate, and run workflows, plus a stdio MCP server entry.",
   "license": "AGPL-3.0-or-later",
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "cc-wf": "./dist/cli.js"
+    "ccwf": "./dist/cli.js"
   },
   "files": [
     "dist",
@@ -24,10 +25,20 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "echo 'cli: skeleton, no build yet'",
-    "check": "echo 'cli: skeleton, no check'",
-    "lint": "echo 'cli: skeleton, no lint'",
-    "format": "echo 'cli: skeleton, no format'",
-    "test": "echo 'cli: skeleton, no test'"
+    "build": "tsc && chmod +x dist/cli.js",
+    "check": "tsc --noEmit",
+    "lint": "echo 'cli: no lint config yet'",
+    "format": "echo 'cli: no format config yet'",
+    "test": "echo 'cli: no tests yet'"
+  },
+  "dependencies": {
+    "@cc-wf-studio/core": "workspace:*",
+    "@cc-wf-studio/mcp": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "typescript": "^5.3.0"
   }
 }

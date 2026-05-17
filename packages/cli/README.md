@@ -23,6 +23,7 @@ pnpm add -D @cc-wf-studio/cli
 | `ccwf run <file>` | `ccwf export` + a "next step" hint. `--launch` additionally spawns Claude Code when available. |
 | `ccwf preview <file>` | Open a read-only viewer (Mermaid + per-node Markdown panes) in a local browser. Auto-reloads when the file changes. |
 | `ccwf canvas <file>` | (Experimental) Open the **full editable** cc-wf-studio canvas in a local browser. Saves write back to the same file. |
+| `ccwf install-skills` | Copy the bundled Claude Code Skill into `~/.claude/skills/` (or `./.claude/skills/` with `--project`) so AI agents learn when to use ccwf. |
 
 ### `ccwf render`
 
@@ -131,6 +132,19 @@ ccwf canvas ./my-workflow.json --port 51234   # pin to a port
 **Security**: the server binds to the IPv4 loopback (`127.0.0.1`) by default; the printed URL says `localhost` and both addresses resolve to the same server. The entry URL and WebSocket both live behind a per-session UUID path prefix (`http://localhost:<port>/<uuid>/`, `ws://localhost:<port>/<uuid>/ws`); requests without the prefix get a 403. Do **not** expose the URL on a public network — there is no authentication beyond knowing the UUID. Use `--host` only when you understand the implications (an explicit `--host` value is used for both bind and display).
 
 The bundled webview's VSCode message protocol is emulated by a small polyfill (`bootstrap.js`) injected into `index.html`. The webview source is **unchanged** — `window.acquireVsCodeApi` returns a WebSocket-backed transport that talks to this CLI process.
+
+### `ccwf install-skills`
+
+```sh
+ccwf install-skills                # ~/.claude/skills/ccwf-cli (user-scope, default)
+ccwf install-skills --project      # ./.claude/skills/ccwf-cli (commit to share with the team)
+ccwf install-skills --overwrite    # replace an existing copy
+ccwf install-skills --dry-run      # print paths, write nothing
+```
+
+Installs a [Claude Code Skill](https://code.claude.com/docs/en/skills) that teaches AI agents (Claude Code in particular) when to reach for `ccwf` and which subcommand fits each user phrasing. The skill auto-triggers when the user mentions viewing, validating, executing, or converting a workflow file — Claude then runs `ccwf` through Bash without per-command permission prompts (the skill whitelists `Bash(ccwf:*)` via `allowed-tools`).
+
+After installing, open or restart your Claude Code session so the skill loads.
 
 ## Fixtures
 

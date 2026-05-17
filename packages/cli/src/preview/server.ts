@@ -6,14 +6,15 @@
  *   - serves the bundled `overview.html` with an injected
  *     `<script>window.__CC_WF_PREVIEW__ = {...}</script>`
  *   - serves `/assets/*` from the same dist directory
- *   - (when `--watch`) holds long-lived `/events/:token` SSE connections that
- *     the page reloads on when the source file changes
+
+ *   - holds long-lived `/<sessionId>/events` SSE connections that the page reloads on
+ *     when the source file changes (and that drive auto-shutdown)
  *
- * Threat model: localhost binding + URL token. Sufficient for single-user
+ * Threat model: localhost binding + URL session id. Sufficient for single-user
  * developer-machine use, NOT a public-facing endpoint.
  */
 
-import { randomBytes } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from 'node:http';
 import * as path from 'node:path';
@@ -39,7 +40,7 @@ export interface PreviewServerOptions {
   webviewDistDir: string;
   /** Initial bootstrap config baked into `window.__CC_WF_PREVIEW__`. */
   bootstrap: PreviewBootstrap;
-  /** Bind host. Default `127.0.0.1` — never bind to 0.0.0.0 without a token check. */
+  /** Bind host. Default `127.0.0.1` — never bind to 0.0.0.0 without the id check. */
   host?: string;
   /** Preferred port. `0` (default) asks the OS for any free port. */
   port?: number;
@@ -66,8 +67,9 @@ export interface PreviewBootstrap {
 export interface PreviewServerHandle {
   host: string;
   port: number;
-  token: string;
-  /** URL the user should open in their browser (`http://host:port/?token=...`). */
+  /** UUID v4 used as the URL path prefix (entry: `/<sessionId>/`, SSE: `/<sessionId>/events`). */
+  sessionId: string;
+  /** URL the user should open in their browser (`http://host:port/<sessionId>/`). */
   url: string;
   /** Update the in-memory bootstrap; the page reads the new copy on its next reload. */
   setBootstrap(next: PreviewBootstrap): void;
@@ -77,12 +79,19 @@ export interface PreviewServerHandle {
   close(): Promise<void>;
 }
 
-function tokenFromQuery(req: IncomingMessage): string | null {
-  if (!req.url) return null;
-  const idx = req.url.indexOf('?');
-  if (idx < 0) return null;
-  const params = new URLSearchParams(req.url.slice(idx + 1));
-  return params.get('token');
+/**
+ * Strip the leading `/<sessionId>` prefix from a path, returning the remainder
+ * (or `null` if the prefix doesn't match — caller should respond with 403).
+ * The session id lives in the URL path rather than as a query string so
+ * that the browser's default Referrer-Policy (`strict-origin-when-cross-origin`)
+ * does not leak it to off-origin destinations when the user clicks an external
+ * Markdown link rendered inside the preview.
+ */
+function stripSessionPrefix(pathname: string, sessionId: string): string | null {
+  const prefix = `/${sessionId}`;
+  if (pathname === prefix) return '/';
+  if (pathname.startsWith(`${prefix}/`)) return pathname.slice(prefix.length);
+  return null;
 }
 
 function injectBootstrap(html: string, bootstrap: PreviewBootstrap): string {
@@ -105,7 +114,7 @@ export async function startPreviewServer(
   options: PreviewServerOptions
 ): Promise<PreviewServerHandle> {
   const host = options.host ?? '127.0.0.1';
-  const token = randomBytes(16).toString('hex');
+  const sessionId = randomUUID();
   let bootstrap: PreviewBootstrap = options.bootstrap;
   const sseClients = new Set<ServerResponse>();
   const autoShutdownAfterMs = options.autoShutdownAfterMs ?? 0;
@@ -188,14 +197,15 @@ export async function startPreviewServer(
   const serveStatic = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     const rawUrl = req.url ?? '/';
     const pathname = rawUrl.split('?')[0];
+    const stripped = stripSessionPrefix(pathname, sessionId);
+    if (stripped === null) {
+      res.statusCode = 403;
+      res.setHeader('content-type', 'text/plain; charset=utf-8');
+      res.end('Forbidden: session id missing or invalid.\n');
+      return;
+    }
 
-    if (pathname === '/' || pathname === '/index.html') {
-      if (tokenFromQuery(req) !== token) {
-        res.statusCode = 403;
-        res.setHeader('content-type', 'text/plain; charset=utf-8');
-        res.end('Forbidden: token missing or invalid.\n');
-        return;
-      }
+    if (stripped === '/' || stripped === '/index.html') {
       try {
         const raw = await fs.readFile(path.join(options.webviewDistDir, 'overview.html'), 'utf-8');
         const html = injectBootstrap(raw, bootstrap);
@@ -210,13 +220,7 @@ export async function startPreviewServer(
       return;
     }
 
-    if (pathname.startsWith('/events/')) {
-      const expectedPath = `/events/${token}`;
-      if (pathname !== expectedPath) {
-        res.statusCode = 403;
-        res.end('Forbidden\n');
-        return;
-      }
+    if (stripped === '/events') {
       res.statusCode = 200;
       res.setHeader('content-type', 'text/event-stream; charset=utf-8');
       res.setHeader('cache-control', 'no-store');
@@ -244,7 +248,7 @@ export async function startPreviewServer(
       return;
     }
 
-    const relative = pathname.replace(/^\/+/, '');
+    const relative = stripped.replace(/^\/+/, '');
     const target = path.resolve(options.webviewDistDir, relative);
     if (!isWithinDirectory(options.webviewDistDir, target)) {
       res.statusCode = 403;
@@ -292,8 +296,8 @@ export async function startPreviewServer(
   return {
     host,
     port,
-    token,
-    url: `http://${host}:${port}/?token=${token}`,
+    sessionId,
+    url: `http://${host}:${port}/${sessionId}/`,
     setBootstrap(next) {
       bootstrap = next;
     },

@@ -33,8 +33,13 @@ function resolveWebviewAssets(extensionUri: vscode.Uri): WebviewAssetRefs {
   try {
     const indexHtmlPath = path.join(extensionUri.fsPath, 'src', 'webview', 'dist', 'index.html');
     const html = fs.readFileSync(indexHtmlPath, 'utf-8');
-    const scriptMatch = html.match(/<script[^>]+type="module"[^>]+src="\/?([^"]+)"/i);
-    const styleMatch = html.match(/<link[^>]+rel="stylesheet"[^>]+href="\/?([^"]+)"/i);
+    // Strip both `./` and `/` leading segments so the path joins cleanly with
+    // the extensionUri directory (the webview tree always lives at
+    // `src/webview/dist/`; the HTML's own base is just an artefact of vite's
+    // `base: './'` setting we use so the same dist works behind a URL prefix
+    // in `ccwf preview` / `ccwf canvas`).
+    const scriptMatch = html.match(/<script[^>]+type="module"[^>]+src="(?:\.\/|\/)?([^"]+)"/i);
+    const styleMatch = html.match(/<link[^>]+rel="stylesheet"[^>]+href="(?:\.\/|\/)?([^"]+)"/i);
     if (!scriptMatch) {
       console.warn('[webview-content] Could not find module script in index.html; using fallback');
       return fallback;

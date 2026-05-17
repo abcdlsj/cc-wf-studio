@@ -1,18 +1,19 @@
 /**
  * `ccwf canvas` HTTP + WebSocket server.
  *
- * Serves the bundled webview at `/` and a long-lived WebSocket at `/ws/<token>`
- * that emulates the VSCode webview message channel. The browser-side polyfill
- * lives in `bootstrap.ts` (served as `/bootstrap.js`) and rewires
+ * Serves the bundled webview at `/<sessionId>/` and a long-lived WebSocket at
+ * `/<sessionId>/ws` that emulates the VSCode webview message channel. The
+ * browser-side polyfill lives in `bootstrap.ts` (served as
+ * `/<sessionId>/bootstrap.js`) and rewires
  * `window.acquireVsCodeApi` to push/receive through this socket so the webview
  * code can run unmodified.
  *
- * Threat model: localhost binding + URL-token. Sufficient for single-user
+ * Threat model: localhost binding + URL session id. Sufficient for single-user
  * developer-machine use, NOT a public-facing endpoint. The README and the
  * `canvas` command's stdout both spell this out.
  */
 
-import { randomBytes } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from 'node:http';
 import * as path from 'node:path';
@@ -49,7 +50,7 @@ export interface CanvasServerOptions {
   handlers: CanvasServerHandlers;
   /** Static config exposed to the browser as `window.__CC_WF_BOOTSTRAP__`. */
   bootstrapConfig?: Record<string, unknown>;
-  /** Bind host. Default `127.0.0.1` — never bind to 0.0.0.0 without a token check. */
+  /** Bind host. Default `127.0.0.1` — never bind to 0.0.0.0 without the id check. */
   host?: string;
   /** Preferred port. `0` (default) asks the OS for any free port. */
   port?: number;
@@ -58,24 +59,33 @@ export interface CanvasServerOptions {
 export interface CanvasServerHandle {
   host: string;
   port: number;
-  token: string;
-  /** URL the user should open in their browser (`http://host:port/?token=...`). */
+  /** UUID v4 used as the URL path prefix (entry: `/<sessionId>/`, WS: `/<sessionId>/ws`). */
+  sessionId: string;
+  /** URL the user should open in their browser (`http://host:port/<sessionId>/`). */
   url: string;
   /** Shut down the HTTP server, close all open WebSockets, and resolve. */
   close(): Promise<void>;
 }
 
-function tokenFromQuery(req: IncomingMessage): string | null {
-  if (!req.url) return null;
-  const idx = req.url.indexOf('?');
-  if (idx < 0) return null;
-  const params = new URLSearchParams(req.url.slice(idx + 1));
-  return params.get('token');
+/**
+ * Strip the `/<sessionId>` URL prefix and return the remainder, or `null` when
+ * the prefix doesn't match. Putting the session id in the URL path (rather
+ * than as a query string) keeps it out of cross-origin Referer headers when
+ * the canvas navigates to external links.
+ */
+function stripSessionPrefix(pathname: string, sessionId: string): string | null {
+  const prefix = `/${sessionId}`;
+  if (pathname === prefix) return '/';
+  if (pathname.startsWith(`${prefix}/`)) return pathname.slice(prefix.length);
+  return null;
 }
 
 function injectBootstrap(html: string, bootstrapConfig: Record<string, unknown>): string {
   const inlineConfig = `<script>window.__CC_WF_BOOTSTRAP__ = ${JSON.stringify(bootstrapConfig)};</script>`;
-  const loader = `<script src="/bootstrap.js"></script>`;
+  // Relative to the host HTML; the entry lives at `/<sessionId>/` so
+  // `./bootstrap.js` resolves to `/<sessionId>/bootstrap.js`, which the server
+  // serves below.
+  const loader = `<script src="./bootstrap.js"></script>`;
   const injection = `${inlineConfig}\n${loader}\n`;
   // Inject before the first <script type="module"> tag the built index.html emits.
   // Fallback: prepend to </head> if no module script is found.
@@ -96,21 +106,19 @@ async function serveStatic(
   res: ServerResponse,
   webviewDistDir: string,
   bootstrapConfig: Record<string, unknown>,
-  expectedToken: string
+  expectedSessionId: string
 ): Promise<void> {
   const rawUrl = req.url ?? '/';
   const pathname = rawUrl.split('?')[0];
+  const stripped = stripSessionPrefix(pathname, expectedSessionId);
+  if (stripped === null) {
+    res.statusCode = 403;
+    res.setHeader('content-type', 'text/plain; charset=utf-8');
+    res.end('Forbidden: session id missing or invalid.\n');
+    return;
+  }
 
-  if (pathname === '/') {
-    // Token is enforced on the entry-point URL. Sub-assets are reachable only
-    // after the user already opened the tab with the token, which is enough
-    // for the localhost-only threat model.
-    if (tokenFromQuery(req) !== expectedToken) {
-      res.statusCode = 403;
-      res.setHeader('content-type', 'text/plain; charset=utf-8');
-      res.end('Forbidden: token missing or invalid.\n');
-      return;
-    }
+  if (stripped === '/' || stripped === '/index.html') {
     try {
       const raw = await fs.readFile(path.join(webviewDistDir, 'index.html'), 'utf-8');
       const html = injectBootstrap(raw, bootstrapConfig);
@@ -125,7 +133,7 @@ async function serveStatic(
     return;
   }
 
-  if (pathname === '/bootstrap.js') {
+  if (stripped === '/bootstrap.js') {
     res.statusCode = 200;
     res.setHeader('content-type', MIME_TYPES['.js']);
     res.setHeader('cache-control', 'no-store');
@@ -133,7 +141,7 @@ async function serveStatic(
     return;
   }
 
-  const relative = pathname.replace(/^\/+/, '');
+  const relative = stripped.replace(/^\/+/, '');
   const target = path.resolve(webviewDistDir, relative);
   if (!isWithinDirectory(webviewDistDir, target)) {
     res.statusCode = 403;
@@ -161,14 +169,14 @@ export async function startCanvasServer(
   options: CanvasServerOptions
 ): Promise<CanvasServerHandle> {
   const host = options.host ?? '127.0.0.1';
-  const token = randomBytes(16).toString('hex');
+  const sessionId = randomUUID();
   const bootstrapConfig: Record<string, unknown> = {
     ...(options.bootstrapConfig ?? {}),
     // wsUrl is filled in after we know the listening port.
   };
 
   const httpServer: Server = createServer((req, res) => {
-    serveStatic(req, res, options.webviewDistDir, bootstrapConfig, token).catch((error) => {
+    serveStatic(req, res, options.webviewDistDir, bootstrapConfig, sessionId).catch((error) => {
       res.statusCode = 500;
       res.end(`Server error: ${(error as Error).message}\n`);
     });
@@ -214,7 +222,7 @@ export async function startCanvasServer(
 
   httpServer.on('upgrade', (req, socket, head) => {
     const url = req.url ?? '';
-    const expectedPath = `/ws/${token}`;
+    const expectedPath = `/${sessionId}/ws`;
     if (!url.startsWith(expectedPath)) {
       socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
       socket.destroy();
@@ -238,13 +246,13 @@ export async function startCanvasServer(
     throw new Error('Canvas server did not return an inet address.');
   }
   const port = address.port;
-  bootstrapConfig.wsUrl = `ws://${host}:${port}/ws/${token}`;
+  bootstrapConfig.wsUrl = `ws://${host}:${port}/${sessionId}/ws`;
 
   return {
     host,
     port,
-    token,
-    url: `http://${host}:${port}/?token=${token}`,
+    sessionId,
+    url: `http://${host}:${port}/${sessionId}/`,
     async close() {
       for (const socket of openSockets) {
         socket.close();

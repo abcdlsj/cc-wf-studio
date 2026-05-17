@@ -14,7 +14,7 @@
  * Node.js process. For "just view a workflow" use `ccwf preview` (lighter,
  * read-only, planned in a follow-up).
  *
- * Security model: 127.0.0.1 only + random URL token. NOT designed for network
+ * Security model: 127.0.0.1 only + UUID path slug. NOT designed for network
  * exposure — the warning is printed on startup.
  */
 
@@ -122,7 +122,6 @@ export function registerCanvasCommand(program: Command): void {
           `ccwf canvas server listening at ${server.url}`,
           `  workflow: ${path.resolve(file)}`,
           `  bind:     ${server.host}:${server.port}`,
-          `  ws path:  /ws/${server.token}`,
           '',
           'localhost-only — DO NOT expose this URL on a public network.',
           'Save buttons in the canvas will write back to the workflow file.',

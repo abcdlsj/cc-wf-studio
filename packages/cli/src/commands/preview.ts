@@ -127,7 +127,7 @@ export function registerPreviewCommand(program: Command): void {
         // The SSE channel powers both auto-reload on file change and the
         // disconnect-detection that drives auto-shutdown. The page subscribes
         // unconditionally; both behaviours are baked in.
-        const sseUrl = `http://${server.host}:${server.port}/events/${server.token}`;
+        const sseUrl = `http://${server.host}:${server.port}/${server.sessionId}/events`;
         server.setBootstrap({ workflow: initialWorkflow, locale, sseUrl });
 
         const watcher = watchWorkflowFile({

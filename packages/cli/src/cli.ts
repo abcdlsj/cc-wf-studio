@@ -12,6 +12,7 @@
 import { Command } from 'commander';
 import { registerCanvasCommand } from './commands/canvas.js';
 import { registerExportCommand } from './commands/export.js';
+import { registerInstallSkillsCommand } from './commands/install-skills.js';
 import { registerMcpCommand } from './commands/mcp.js';
 import { registerPreviewCommand } from './commands/preview.js';
 import { registerRenderCommand } from './commands/render.js';
@@ -32,6 +33,7 @@ registerExportCommand(program);
 registerRunCommand(program);
 registerPreviewCommand(program);
 registerCanvasCommand(program);
+registerInstallSkillsCommand(program);
 
 program.parseAsync(process.argv).catch((error) => {
   process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);

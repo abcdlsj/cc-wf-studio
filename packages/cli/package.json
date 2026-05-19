@@ -1,6 +1,6 @@
 {
   "name": "@cc-wf-studio/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Command-line tool for cc-wf-studio: render, validate, and run workflows, plus a stdio MCP server entry.",
   "license": "AGPL-3.0-or-later",
   "type": "module",

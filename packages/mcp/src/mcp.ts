@@ -9,10 +9,21 @@
  * details (sha256 revisions, no auto-create of sub-agent .md files, …).
  */
 
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createWorkflowMcpServer } from './factory.js';
 import { FileWorkflowAdapter } from './file-adapter.js';
+
+// Read version from package.json so `ccwf-mcp --version` stays in sync with
+// the published npm version. The compiled entry sits at `<pkg>/dist/mcp.js`,
+// so package.json is one directory up.
+const pkgJsonPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json');
+const { version: pkgVersion } = JSON.parse(readFileSync(pkgJsonPath, 'utf8')) as {
+  version: string;
+};
 
 const USAGE = `Usage: ccwf-mcp --file <path-to-workflow.json> [--project-root <dir>]`;
 
@@ -23,6 +34,7 @@ async function main(): Promise<void> {
       file: { type: 'string' as const },
       'project-root': { type: 'string' as const },
       help: { type: 'boolean' as const, short: 'h' },
+      version: { type: 'boolean' as const, short: 'V' },
     },
     strict: true,
   };
@@ -31,6 +43,11 @@ async function main(): Promise<void> {
   } catch (error) {
     process.stderr.write(`${(error as Error).message}\n${USAGE}\n`);
     process.exit(2);
+  }
+
+  if (parsed.values.version) {
+    process.stdout.write(`${pkgVersion}\n`);
+    return;
   }
 
   if (parsed.values.help) {

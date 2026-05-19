@@ -9,6 +9,9 @@
  *   - run <file> [--overwrite]      (commit 7)
  */
 
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { registerCanvasCommand } from './commands/canvas.js';
 import { registerExportCommand } from './commands/export.js';
@@ -20,12 +23,20 @@ import { registerRunCommand } from './commands/run.js';
 import { registerUninstallSkillsCommand } from './commands/uninstall-skills.js';
 import { registerValidateCommand } from './commands/validate.js';
 
+// Read version from package.json so `ccwf --version` stays in sync with the
+// published npm version without a build-time substitution step. The compiled
+// entry sits at `<pkg>/dist/cli.js`, so package.json is one directory up.
+const pkgJsonPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json');
+const { version: pkgVersion } = JSON.parse(readFileSync(pkgJsonPath, 'utf8')) as {
+  version: string;
+};
+
 const program = new Command();
 
 program
   .name('ccwf')
   .description('Command-line tool for cc-wf-studio workflows.')
-  .version('0.0.0');
+  .version(pkgVersion);
 
 registerRenderCommand(program);
 registerValidateCommand(program);

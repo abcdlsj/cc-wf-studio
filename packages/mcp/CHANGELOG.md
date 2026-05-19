@@ -1,5 +1,11 @@
 # @cc-wf-studio/mcp
 
+## 0.1.1
+
+### Patch Changes
+
+- Fix `ccwf --version` reporting `0.0.0` instead of the actual published version, and add a `--version` / `-V` flag to `ccwf-mcp`. Both bins now read the version from their own `package.json` at startup so they stay in sync with the npm release without a build-time substitution step.
+
 ## 0.1.0
 
 ### Minor Changes

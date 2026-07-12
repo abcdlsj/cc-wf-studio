@@ -203,6 +203,8 @@ export interface RunAsSlashCommandPayload {
  * Run as slash command success payload
  */
 export interface RunAsSlashCommandSuccessPayload {
+  /** Correlates the launch with execution observability events. */
+  runId?: string;
   /** Workflow name that was run */
   workflowName: string;
   /** Terminal name where command is running */
@@ -211,6 +213,26 @@ export interface RunAsSlashCommandSuccessPayload {
   timestamp: string; // ISO 8601
   /** Session ID for JSONL tracking (Commentary AI) */
   sessionId?: string;
+}
+
+/** Live Claude Code session state used by the execution observability PoC. */
+export interface ExecutionSessionPayload {
+  runId: string;
+  sessionId: string;
+  workflowName: string;
+  provider?: 'claude-code' | 'codex';
+  status: 'running' | 'waiting' | 'ended' | 'failed' | 'aborted';
+  startedAt: string;
+  updatedAt: string;
+  lastActivity?: {
+    type: 'assistant' | 'tool_use' | 'error';
+    summary: string;
+  };
+}
+
+/** Identifies the execution session whose terminal should receive focus. */
+export interface FocusExecutionTerminalPayload {
+  runId: string;
 }
 
 // ============================================================================
@@ -1283,6 +1305,7 @@ export type ExtensionMessage =
   | Message<CommentarySessionPayload, 'COMMENTARY_SESSION_STARTED'>
   | Message<void, 'COMMENTARY_SESSION_ENDED'>
   | Message<CommentaryErrorPayload, 'COMMENTARY_ERROR'>
+  | Message<ExecutionSessionPayload, 'EXECUTION_SESSION_UPDATED'>
   | Message<SampleWorkflowListPayload, 'SAMPLE_WORKFLOW_LIST'>
   | Message<SampleWorkflowLoadedPayload, 'SAMPLE_WORKFLOW_LOADED'>
   | Message<SampleWorkflowPreviewLoadedPayload, 'SAMPLE_WORKFLOW_PREVIEW_LOADED'>;
@@ -2472,6 +2495,7 @@ export type WebviewMessage =
   | Message<ExportForCopilotCliPayload, 'EXPORT_FOR_COPILOT_CLI'>
   | Message<ExportForCodexCliPayload, 'EXPORT_FOR_CODEX_CLI'>
   | Message<RunForCodexCliPayload, 'RUN_FOR_CODEX_CLI'>
+  | Message<FocusExecutionTerminalPayload, 'FOCUS_EXECUTION_TERMINAL'>
   | Message<ExportForRooCodePayload, 'EXPORT_FOR_ROO_CODE'>
   | Message<RunForRooCodePayload, 'RUN_FOR_ROO_CODE'>
   | Message<ExportForGeminiCliPayload, 'EXPORT_FOR_GEMINI_CLI'>

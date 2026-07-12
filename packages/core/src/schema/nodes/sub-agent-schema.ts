@@ -1,11 +1,11 @@
 /**
  * SubAgent node property schema (issue #803).
  *
- * The first — and, for this branch, only — node type migrated to the
- * schema-driven property model. `model`/`tools`/`memory`/`color`/`builtInType`
- * are Claude Code-only and scoped to `['claudeCode']`; everything else applies
- * to every target. The UI scopes fields from this schema and exporters derive
- * "ignored by target X" warnings from it (see {@link ./warnings.js}).
+ * The first node type migrated to the schema-driven property model.
+ * `model`/`tools`/`memory`/`color`/`builtInType` are Claude Code-only and
+ * scoped to `['claudeCode']`; everything else applies to every target. The UI
+ * renders its property panel from this schema and exporters derive "ignored by
+ * target X" warnings from it (see {@link ../warnings.js}).
  *
  * Mirrors `SubAgentData` in types/workflow-definition.ts. The derived
  * {@link SubAgentSchemaShape} should stay assignable to `SubAgentData`; this is
@@ -14,7 +14,8 @@
  */
 
 import { z } from 'zod';
-import { field, type PropertyField, toZodObject } from './field.js';
+import type { SubAgentData } from '../../types/workflow-definition.js';
+import { type AssertAssignable, field, type PropertyField, toZodObject } from '../field.js';
 
 export const SUB_AGENT_MODEL_VALUES = ['sonnet', 'opus', 'haiku', 'fable', 'inherit'] as const;
 export type SubAgentModel = (typeof SUB_AGENT_MODEL_VALUES)[number];
@@ -33,6 +34,8 @@ const SUB_AGENT_COLOR_VALUES = [
   'cyan',
 ] as const;
 
+const isBuiltIn = (data: Record<string, unknown>) => !!data.builtInType;
+
 export const subAgentPropertySchema = {
   description: field(z.string(), {
     targets: 'all',
@@ -49,35 +52,43 @@ export const subAgentPropertySchema = {
     labelKey: 'subAgent.field.prompt',
     control: 'textarea',
   }),
+  // Retained for backward compatibility; no longer rendered — settings are
+  // grouped per agent into sections instead of toggled by agentType.
   agentType: field(z.enum(['claudeCode', 'other']).optional(), {
     targets: 'all',
     labelKey: 'subAgent.field.agentType',
-    control: 'select',
-    options: ['claudeCode', 'other'],
   }),
   model: field(z.enum(SUB_AGENT_MODEL_VALUES).optional(), {
     targets: ['claudeCode'],
     labelKey: 'subAgent.field.model',
     control: 'select',
     options: SUB_AGENT_MODEL_VALUES,
-    controlledByBuiltIn: true,
+    sectionKey: 'claudeCode',
+    readonlyWhen: isBuiltIn,
+    readonlyHintKey: 'subAgent.builtIn.controlledByPreset',
   }),
   tools: field(z.string().optional(), {
     targets: ['claudeCode'],
     labelKey: 'subAgent.field.tools',
     control: 'tools',
-    controlledByBuiltIn: true,
+    sectionKey: 'claudeCode',
+    readonlyWhen: isBuiltIn,
+    readonlyHintKey: 'subAgent.builtIn.controlledByPreset',
   }),
   memory: field(z.enum(['user', 'project', 'local']).optional(), {
     targets: ['claudeCode'],
     labelKey: 'subAgent.field.memory',
     control: 'select',
     options: ['user', 'project', 'local'],
+    sectionKey: 'claudeCode',
+    visibleWhen: (data) => !isBuiltIn(data),
   }),
   color: field(z.enum(SUB_AGENT_COLOR_VALUES).optional(), {
     targets: ['claudeCode'],
     labelKey: 'subAgent.field.color',
     control: 'color',
+    sectionKey: 'claudeCode',
+    visibleWhen: (data) => !isBuiltIn(data),
   }),
   builtInType: field(z.enum(['general-purpose', 'explore', 'plan']).optional(), {
     targets: ['claudeCode'],
@@ -92,3 +103,9 @@ export const subAgentZodObject = toZodObject(subAgentPropertySchema);
 
 /** Inferred shape of the validated SubAgent property set. */
 export type SubAgentSchemaShape = z.infer<typeof subAgentZodObject>;
+
+// Compile-time drift guards: schema field names must exist on SubAgentData and
+// declared value types must stay assignable to the interface (optionality may
+// be looser in the schema; see each field's comment).
+export type SubAgentSchemaFieldNamesGuard = AssertAssignable<keyof z.infer<typeof subAgentZodObject>, keyof SubAgentData>;
+export type SubAgentSchemaValueTypesGuard = AssertAssignable<z.infer<typeof subAgentZodObject>, Partial<SubAgentData>>;

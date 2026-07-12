@@ -158,9 +158,6 @@ export interface WebviewTranslationKeys {
   // Branch Session Node (Feature: branch-session-node, Claude Code only)
   'node.branchSession.title': string;
   'node.branchSession.description': string;
-  'property.branchSession.workDescription': string;
-  'property.branchSession.workDescriptionPlaceholder': string;
-  'property.branchSession.workDescription.help': string;
   'property.branchSession.claudeCodeOnlyNotice': string;
   'default.newBranchSession': string;
   'dialog.claudeOnlyWarning.title': string;
@@ -254,14 +251,7 @@ export interface WebviewTranslationKeys {
   'property.nodeName': string;
   'property.nodeName.placeholder': string;
   'property.nodeName.help': string;
-  'property.description': string;
-  'property.prompt': string;
-  'property.model': string;
-  'property.label': string;
-  'property.label.placeholder': string;
-  'property.evaluationTarget': string;
-  'property.evaluationTarget.placeholder': string;
-  'property.evaluationTarget.help': string;
+  'property.select.custom': string;
 
   // Start/End node descriptions
   'property.startNodeDescription': string;
@@ -269,10 +259,6 @@ export interface WebviewTranslationKeys {
   'property.unknownNodeType': string;
 
   // Sub-Agent properties
-  'property.tools': string;
-  'property.tools.placeholder': string;
-  'property.tools.help': string;
-  'property.memory': string;
   'property.memory.referenceUrl': string;
   'properties.subAgent.color': string;
   'properties.subAgent.colorPlaceholder': string;
@@ -280,55 +266,34 @@ export interface WebviewTranslationKeys {
   'properties.subAgent.colorHelp': string;
 
   // Skill properties
-  'property.skillPath': string;
-  'property.scope': string;
   'property.scope.user': string;
   'property.scope.project': string;
   'property.scope.local': string;
   // Legacy key for backward compatibility
   'property.scope.personal': string;
-  'property.validationStatus': string;
   'property.validationStatus.valid': string;
   'property.validationStatus.missing': string;
   'property.validationStatus.invalid': string;
   'property.validationStatus.valid.tooltip': string;
   'property.validationStatus.missing.tooltip': string;
   'property.validationStatus.invalid.tooltip': string;
-  'property.allowedTools': string;
 
   // AskUserQuestion properties
-  'property.questionText': string;
-  'property.multiSelect': string;
   'property.multiSelect.enabled': string;
   'property.multiSelect.disabled': string;
-  'property.aiSuggestions': string;
   'property.aiSuggestions.enabled': string;
   'property.aiSuggestions.disabled': string;
-  'property.options': string;
-  'property.optionsCount': string;
-  'property.optionNumber': string;
-  'property.addOption': string;
   'property.remove': string;
   'property.optionLabel.placeholder': string;
   'property.optionDescription.placeholder': string;
 
   // Prompt properties
-  'property.prompt.label': string;
-  'property.prompt.placeholder': string;
-  'property.prompt.help': string;
   'property.detectedVariables': string;
   'property.variablesSubstituted': string;
 
   // Branch properties
-  'property.branchType': string;
-  'property.conditional': string;
-  'property.switch': string;
   'property.branchType.conditional.help': string;
   'property.branchType.switch.help': string;
-  'property.branches': string;
-  'property.branchesCount': string;
-  'property.branchNumber': string;
-  'property.addBranch': string;
   'property.branchLabel': string;
   'property.branchLabel.placeholder': string;
   'property.branchCondition': string;
@@ -638,18 +603,13 @@ export interface WebviewTranslationKeys {
   // MCP Property Panel
   'property.mcp.serverId': string;
   'property.mcp.toolName': string;
-  'property.mcp.toolDescription': string;
-  'property.mcp.parameters': string;
-  'property.mcp.parameterValues': string;
   'property.mcp.parameterCount': string;
-  'property.mcp.editParameters': string;
   'property.mcp.edit.manualParameterConfig': string;
   'property.mcp.edit.aiParameterConfig': string;
   'property.mcp.edit.aiToolSelection': string;
   'property.mcp.taskDescription': string;
   'property.mcp.parameterDescription': string;
   'property.mcp.configuredValues': string;
-  'property.mcp.infoNote': string;
 
   // MCP Parameter Form
   'mcp.parameter.formTitle': string;
@@ -899,9 +859,103 @@ export interface WebviewTranslationKeys {
   // Sub-Agent Form Dialog (Create New)
   'subAgent.form.title': string;
   'subAgent.form.description': string;
-  'subAgent.form.agentTypeLabel': string;
-  'subAgent.form.agentType.claudeCode': string;
-  'subAgent.form.agentType.other': string;
+  // Schema-driven property panel field labels (skill/mcp/subAgentFlow)
+  'skill.field.name': string;
+  'skill.field.description': string;
+  'skill.field.skillPath': string;
+  'skill.field.scope': string;
+  'skill.field.validationStatus': string;
+  'skill.field.allowedTools': string;
+  'skill.field.executionMode': string;
+  'skill.field.executionPrompt': string;
+  'skill.field.source': string;
+  'skill.field.pluginName': string;
+  'mcp.field.serverId': string;
+  'mcp.field.toolName': string;
+  'mcp.field.toolDescription': string;
+  'mcp.field.validationStatus': string;
+  'mcp.field.parameters': string;
+  'mcp.field.mode': string;
+  'mcp.field.aiToolSelectionConfig': string;
+  'mcp.field.aiParameterConfig': string;
+  'mcp.field.parameterValues': string;
+  'subAgentFlow.field.subAgentFlowId': string;
+  'subAgentFlow.field.label': string;
+  'subAgentFlow.field.description': string;
+  'subAgentFlow.field.model': string;
+  'subAgentFlow.field.model.option.sonnet': string;
+  'subAgentFlow.field.model.option.opus': string;
+  'subAgentFlow.field.model.option.haiku': string;
+  'subAgentFlow.field.model.option.fable': string;
+  'subAgentFlow.field.model.option.inherit': string;
+  'subAgentFlow.field.memory': string;
+  'subAgentFlow.field.tools': string;
+  'subAgentFlow.field.tools.placeholder': string;
+  'subAgentFlow.field.tools.help': string;
+  'subAgentFlow.field.color': string;
+  // Schema-driven property panel field labels (askUserQuestion/branch/ifElse/switch)
+  'askUserQuestion.field.questionText': string;
+  'askUserQuestion.field.multiSelect': string;
+  'askUserQuestion.field.useAiSuggestions': string;
+  'askUserQuestion.field.options': string;
+  'askUserQuestion.field.options.item': string;
+  'askUserQuestion.field.options.add': string;
+  'branch.field.branchType': string;
+  'branch.field.branchType.option.conditional': string;
+  'branch.field.branchType.option.switch': string;
+  'branch.field.branches': string;
+  'branch.field.branches.item': string;
+  'branch.field.branches.add': string;
+  'ifElse.field.evaluationTarget': string;
+  'ifElse.field.evaluationTarget.placeholder': string;
+  'ifElse.field.evaluationTarget.help': string;
+  'ifElse.field.branches': string;
+  'ifElse.field.branches.item': string;
+  'switch.field.evaluationTarget': string;
+  'switch.field.evaluationTarget.placeholder': string;
+  'switch.field.evaluationTarget.help': string;
+  'switch.field.branches': string;
+  'switch.field.branches.item': string;
+  'switch.field.branches.add': string;
+  // Schema-driven property panel field labels (prompt/branchSession/codex/group)
+  'prompt.field.label': string;
+  'prompt.field.label.placeholder': string;
+  'prompt.field.prompt': string;
+  'prompt.field.prompt.placeholder': string;
+  'prompt.field.prompt.help': string;
+  'prompt.field.variables': string;
+  'branchSession.field.label': string;
+  'branchSession.field.label.placeholder': string;
+  'branchSession.field.workDescription': string;
+  'branchSession.field.workDescription.placeholder': string;
+  'branchSession.field.workDescription.help': string;
+  'codex.field.label': string;
+  'codex.field.label.help': string;
+  'codex.field.promptMode': string;
+  'codex.field.promptMode.option.fixed': string;
+  'codex.field.promptMode.option.ai-generated': string;
+  'codex.field.prompt': string;
+  'codex.field.prompt.placeholder': string;
+  'codex.field.model': string;
+  'codex.field.reasoningEffort': string;
+  'codex.field.reasoningEffort.option.low': string;
+  'codex.field.reasoningEffort.option.medium': string;
+  'codex.field.reasoningEffort.option.high': string;
+  'codex.field.skipGitRepoCheck': string;
+  'codex.field.sandbox': string;
+  'codex.section.advanced': string;
+  'group.field.label': string;
+  'group.field.label.placeholder': string;
+  // Schema-driven property panel field labels (subAgent)
+  'subAgent.field.description': string;
+  'subAgent.field.agentDefinition': string;
+  'subAgent.field.prompt': string;
+  'subAgent.field.agentType': string;
+  'subAgent.field.model': string;
+  'subAgent.field.tools': string;
+  'subAgent.field.memory': string;
+  'subAgent.field.color': string;
+  'subAgent.field.builtInType': string;
   'subAgent.section.claudeCode': string;
   'subAgent.section.claudeCode.hint': string;
   'subAgent.section.other': string;
